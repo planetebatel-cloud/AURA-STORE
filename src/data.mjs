@@ -6,7 +6,7 @@
 export const SITE = {
   brand: "La Elegant",
   url: "https://aurastorebro.vercel.app",   // change when we connect our own domain
-  wordmarkFont: "Ballet",                    // script for the logo: Ballet / Pinyon Script / Imperial Script / Italianno
+  wordmarkFont: "Italianno",                    // script for the logo: Ballet / Pinyon Script / Imperial Script / Italianno
 
   // Contacts. An empty field is simply not shown.
   whatsapp: "",        // number without +, e.g. "972501234567". Empty = checkout runs in preview mode
