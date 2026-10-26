@@ -3,7 +3,7 @@
   const S = window.SHOP || { products: [], sizes: [], shipping: [], checkout: {} };
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-  const money = n => "₪" + Number(n).toLocaleString("he-IL");
+  const money = n => "₪" + Number(n).toLocaleString("en-US");
   const byId = id => S.products.find(p => p.id === id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const canHover = matchMedia("(hover: hover) and (pointer: fine)").matches;
@@ -25,7 +25,7 @@
 
   /* ---------- wordmarks fit the full width ---------- */
   function fitAll() {
-    $$(".word, .foot-mark").forEach(el => {
+    $$("[data-fit]").forEach(el => {
       const host = el.parentElement;
       const cs = getComputedStyle(host);
       const box = host.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
@@ -54,7 +54,7 @@
     if (!menu) return;
     menu.classList.toggle("open", open);
     menuBtn.setAttribute("aria-expanded", String(open));
-    menuBtn.textContent = open ? "סגירה" : "תפריט";
+    menuBtn.textContent = open ? "Close" : "Menu";
   }
   if (menuBtn) {
     menuBtn.addEventListener("click", () => setMenu(!menu.classList.contains("open")));
@@ -130,7 +130,7 @@
   function show(view) {
     Object.values(views).flat().forEach(s => { const el = $(s); if (el) el.hidden = true; });
     views[view].forEach(s => { const el = $(s); if (el) el.hidden = false; });
-    $("#bag-title").textContent = view === "details" ? "פרטי הזמנה" : view === "done" ? "תודה" : "סל";
+    $("#bag-title").textContent = view === "details" ? "Checkout" : view === "done" ? "Thank you" : "Bag";
     if (view === "cart") renderCart();
     if (view === "details") renderDetails();
     const scroller = $(views[view][0]); if (scroller) scroller.scrollTop = 0;
@@ -166,7 +166,7 @@
   function renderCart() {
     const box = $("#v-cart"), foot = $("#f-cart");
     if (!bag.length) {
-      box.innerHTML = `<div class="empty"><p>הסל ריק כרגע.</p><a class="btn ghost" href="/#shop" data-close>לקולקציה</a></div>`;
+      box.innerHTML = `<div class="empty"><p>Your bag is empty.</p><a class="btn ghost" href="/#shop" data-close>Shop the collection</a></div>`;
       foot.hidden = true;
       return;
     }
@@ -176,13 +176,13 @@
       return `<div class="line">
         <a class="thumb" href="${url}" tabindex="-1"><img src="/${p.poster}" alt=""></a>
         <div class="line-info">
-          <div class="line-top"><a href="${url}">${esc(p.name)}</a><span class="price" dir="ltr">${money(p.price * l.qty)}</span></div>
-          <span class="line-sub">${esc(p.color)} · מידה ${esc(l.size)}</span>
+          <div class="line-top"><a href="${url}">${esc(p.name)}</a><span class="price">${money(p.price * l.qty)}</span></div>
+          <span class="line-sub">${esc(p.color)} · Size ${esc(l.size)}</span>
           <div class="qty">
-            <button type="button" data-q="${i}" data-d="1" aria-label="להוסיף אחד">+</button>
-            <output aria-label="כמות">${l.qty}</output>
-            <button type="button" data-q="${i}" data-d="-1" aria-label="להוריד אחד">−</button>
-            <button type="button" class="rm" data-rm="${i}">הסרה</button>
+            <button type="button" data-q="${i}" data-d="1" aria-label="Add one">+</button>
+            <output aria-label="Quantity">${l.qty}</output>
+            <button type="button" data-q="${i}" data-d="-1" aria-label="Remove one">−</button>
+            <button type="button" class="rm" data-rm="${i}">Remove</button>
           </div>
         </div>
       </div>`;
@@ -207,7 +207,7 @@
     const ship = $("#o-ship");
     if (ship && !ship.children.length) {
       ship.innerHTML = S.shipping.map((s, i) => `<label><span class="ship-txt"><span>${esc(s.label)}</span>${s.note ? `<small>${esc(s.note)}</small>` : ""}</span>
-        <span>${s.price == null ? "" : s.price ? `<span class="price" dir="ltr">${money(s.price)}</span>` : "ללא עלות"} <input type="radio" name="ship" value="${esc(s.id)}"${i ? "" : " checked"}></span></label>`).join("");
+        <span>${s.price == null ? "" : s.price ? `<span class="price">${money(s.price)}</span>` : "Free"} <input type="radio" name="ship" value="${esc(s.id)}"${i ? "" : " checked"}></span></label>`).join("");
       ship.addEventListener("change", () => { toggleAddress(); renderSum(); });
     }
     toggleAddress(); renderSum();
@@ -215,12 +215,12 @@
   function toggleAddress() { const a = $("#o-address"); if (a) a.hidden = shipChoice() && shipChoice().id === "pickup"; }
   function renderSum() {
     const s = shipChoice(), sub = subtotal();
-    const shipTxt = !s ? "" : s.price == null ? "יעודכן באישור" : s.price ? money(s.price) : "ללא עלות";
+    const shipTxt = !s ? "" : s.price == null ? "Confirmed with order" : s.price ? money(s.price) : "Free";
     const total = sub + (s && s.price ? s.price : 0);
     $("#o-sum").innerHTML = `
-      <div><span>סכום ביניים</span><span class="price" dir="ltr">${money(sub)}</span></div>
-      <div><span>משלוח</span><span class="mutedv">${shipTxt}</span></div>
-      <div class="total ruled"><span>סה״כ</span><span><span class="price" dir="ltr">${money(total)}</span>${s && s.price == null ? ' <small class="mutedv">+ משלוח</small>' : ""}</span></div>`;
+      <div><span>Subtotal</span><span class="price">${money(sub)}</span></div>
+      <div><span>Delivery</span><span class="mutedv">${shipTxt}</span></div>
+      <div class="total ruled"><span>Total</span><span><span class="price">${money(total)}</span>${s && s.price == null ? ' <small class="mutedv">+ delivery</small>' : ""}</span></div>`;
   }
 
   function fieldErr(input, msg) {
@@ -244,11 +244,11 @@
       const name = $("#o-name"), phone = $("#o-phone"), email = $("#o-email"), city = $("#o-city"), street = $("#o-street");
       const needAddr = !$("#o-address").hidden;
       const checks = [
-        fieldErr(name, name.value.trim().length < 2 ? "הזינו שם מלא" : ""),
-        fieldErr(phone, /^0(5\d{8}|[2-9]\d{7})$/.test(normPhone(phone.value)) ? "" : "הזינו מספר טלפון ישראלי, למשל 050-1234567"),
-        fieldErr(email, !email.value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim()) ? "" : "כתובת האימייל לא תקינה"),
-        needAddr ? fieldErr(city, city.value.trim() ? "" : "הזינו עיר") : true,
-        needAddr ? fieldErr(street, street.value.trim() ? "" : "הזינו רחוב ומספר") : true
+        fieldErr(name, name.value.trim().length < 2 ? "Enter your full name" : ""),
+        fieldErr(phone, /^0(5\d{8}|[2-9]\d{7})$/.test(normPhone(phone.value)) ? "" : "Enter an Israeli phone number, e.g. 050-1234567"),
+        fieldErr(email, !email.value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim()) ? "" : "That email address doesn’t look right"),
+        needAddr ? fieldErr(city, city.value.trim() ? "" : "Enter your city") : true,
+        needAddr ? fieldErr(street, street.value.trim() ? "" : "Enter street and number") : true
       ];
       const terms = $("#o-terms").checked;
       $("#o-terms-err").hidden = terms;
@@ -266,23 +266,23 @@
   }
 
   function orderText(o) {
-    const lines = o.items.map(l => `• ${l.name} · ${l.color} · מידה ${l.size} · ×${l.qty} · ${money(l.price * l.qty)}`);
-    const shipTxt = o.ship.price == null ? "יעודכן באישור" : o.ship.price ? money(o.ship.price) : "ללא עלות";
+    const lines = o.items.map(l => `• ${l.name} · ${l.color} · Size ${l.size} · ×${l.qty} · ${money(l.price * l.qty)}`);
+    const shipTxt = o.ship.price == null ? "confirmed with order" : o.ship.price ? money(o.ship.price) : "free";
     return [
-      `היי! הזמנה מוקדמת מ-${S.brand}`,
-      `מס׳ הזמנה: ${o.id}`,
+      `Hi! A pre-order from ${S.brand}`,
+      `Order no: ${o.id}`,
       "",
       ...lines,
       "",
-      `סכום ביניים: ${money(o.subtotal)}`,
-      `משלוח: ${o.ship.label} (${shipTxt})`,
-      `סה״כ: ${money(o.total)}${o.ship.price == null ? " + משלוח" : ""}`,
+      `Subtotal: ${money(o.subtotal)}`,
+      `Delivery: ${o.ship.label} (${shipTxt})`,
+      `Total: ${money(o.total)}${o.ship.price == null ? " + delivery" : ""}`,
       "",
-      `שם: ${o.customer.name}`,
-      `טלפון: ${o.customer.phone}`,
-      o.customer.email ? `אימייל: ${o.customer.email}` : "",
-      o.customer.needAddr ? `כתובת: ${[o.customer.street, o.customer.city, o.customer.apt].filter(Boolean).join(", ")}` : "",
-      o.customer.notes ? `הערות: ${o.customer.notes}` : ""
+      `Name: ${o.customer.name}`,
+      `Phone: ${o.customer.phone}`,
+      o.customer.email ? `Email: ${o.customer.email}` : "",
+      o.customer.needAddr ? `Address: ${[o.customer.street, o.customer.city, o.customer.apt].filter(Boolean).join(", ")}` : "",
+      o.customer.notes ? `Notes: ${o.customer.notes}` : ""
     ].join("\n").replace(/\n{3,}/g, "\n\n").trim();
   }
 
@@ -298,7 +298,7 @@
 
     /* Payment hook: when a payment provider is connected, branch on S.checkout.mode here. */
     if (!S.whatsapp) {
-      err.textContent = "מצב תצוגה: עוד לא הוגדר מספר וואטסאפ לקבלת הזמנות.";
+      err.textContent = "Preview mode: no WhatsApp number is set up to receive orders yet.";
       err.hidden = false;
       return;
     }
@@ -310,7 +310,7 @@
         fetch(S.checkout.endpoint, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(order) }).catch(() => {});
       } catch (e) {}
     }
-    $("#d-num").textContent = "הזמנה " + order.id;
+    $("#d-num").textContent = "Order " + order.id;
     $("#d-wa").href = url;
     $("#d-msg").textContent = text;
     bag = []; save(); renderCount();
@@ -324,7 +324,7 @@
     e.preventDefault();
     const p = byId(b.dataset.add);
     add(p.id, b.dataset.size);
-    toast(`נוסף לסל: ${p.name} · ${b.dataset.size}`, { label: "לסל", run: () => openBag("cart") });
+    toast(`Added to bag: ${p.name} · ${b.dataset.size}`, { label: "View bag", run: () => openBag("cart") });
   });
 
   /* ---------- product page ---------- */
@@ -366,7 +366,7 @@
     try {
       if (navigator.share && !canHover) { await navigator.share({ title: document.title, url }); return; }
       await navigator.clipboard.writeText(url);
-      toast("הקישור הועתק");
+      toast("Link copied");
     } catch (err) {
       if (err && err.name === "AbortError") return;
       toast(url);
