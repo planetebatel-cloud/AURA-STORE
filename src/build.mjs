@@ -7,7 +7,6 @@ import { fileURLToPath } from "node:url";
 const SRC = dirname(fileURLToPath(import.meta.url));
 const OUT = join(SRC, "..", "public");
 const TODAY = new Date().toISOString().slice(0, 10);
-const TBD = '<mark class="tbd">[to be added]</mark>';
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const abs = p => SITE.url.replace(/\/$/, "") + p;
@@ -16,17 +15,19 @@ const pUrl = p => "/products/" + p.slug;
 const byId = id => PRODUCTS.find(p => p.id === id);
 const phoneText = n => n ? "0" + String(n).replace(/^972/, "").replace(/(\d{2})(\d{3})(\d{4})$/, "$1-$2-$3") : "";
 const wa = text => SITE.whatsapp ? "https://wa.me/" + SITE.whatsapp + (text ? "?text=" + encodeURIComponent(text) : "") : "";
-const val = v => v ? esc(v) : TBD;
 const B = SITE.business;
-const bizName = val(B.name), bizId = val(B.id), bizAddr = val(B.address);
+const hasContact = !!(SITE.whatsapp || SITE.email || SITE.instagram);
 const contactLine = [
-  SITE.whatsapp ? `WhatsApp ${esc(phoneText(SITE.whatsapp))}` : "",
-  SITE.email ? `email <a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a>` : ""
-].filter(Boolean).join(" · ") || TBD;
-const fontParam = SITE.wordmarkFont.replace(/ /g, "+") + (SITE.wordmarkFont === "Ballet" ? ":opsz@16..72" : "");
+  SITE.whatsapp ? `WhatsApp <a href="${esc(wa(""))}" target="_blank" rel="noopener">${esc(phoneText(SITE.whatsapp))}</a>` : "",
+  SITE.email ? `email <a href="mailto:${esc(SITE.email)}">${esc(SITE.email)}</a>` : "",
+  SITE.instagram ? `Instagram <a href="https://instagram.com/${esc(SITE.instagram)}" target="_blank" rel="noopener">@${esc(SITE.instagram)}</a>` : ""
+].filter(Boolean).join(" · ");
+const contactSentence = contactLine ? `You can reach us by ${contactLine}.` : "You can reach us through the contact options on this site or by replying to your order confirmation.";
+const operator = B.name ? `${esc(B.name)}${B.id ? `, business no. ${esc(B.id)}` : ""}` : "";
+const bizBlock = [B.name && esc(B.name), B.id && "Business no. " + esc(B.id), B.address && esc(B.address)].filter(Boolean).join(" · ");
 
-/* ---------- shared pieces ---------- */
-const wordmark = (cls = "mark") => `<span class="${cls}">${esc(SITE.brand)}</span>`;
+/* ---------- brand lockup (emblem + serif wordmark) ---------- */
+const lockup = (cls = "") => `<span class="lockup ${cls}"><img class="lk-emblem" src="/brand/${cls.includes("lg") ? "emblem" : "emblem-sm"}.webp" alt="" width="${cls.includes("lg") ? 720 : 260}" height="${cls.includes("lg") ? 539 : 195}"><span class="lk-word">${esc(SITE.brand)}</span><span class="lk-est"><i></i>${esc(SITE.est)}<i></i></span></span>`;
 
 function header(page) {
   return `
@@ -36,12 +37,12 @@ function header(page) {
     <div class="head-start">
       <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
       <nav class="nav" id="menu" aria-label="Main">
-        <a href="/#shop">Collection</a>
+        <a href="${pUrl(PRODUCTS[0])}">The Set</a>
         <a href="/story">Story</a>
         <a href="/faq">FAQ</a>
       </nav>
     </div>
-    <a class="head-mark" href="/" aria-label="${esc(SITE.brand)}, home">${wordmark()}</a>
+    <a class="head-mark" href="/" aria-label="${esc(SITE.brand)}, home">${lockup("sm")}</a>
     <button class="bag-btn" id="bag-open" type="button" aria-haspopup="dialog">Bag <span class="count" id="bag-count">0</span></button>
   </div>
 </header>`;
@@ -57,15 +58,15 @@ function footer() {
   const legal = [B.name, B.id ? "Business no. " + B.id : ""].filter(Boolean).map(esc).join(" · ");
   return `
 <footer class="foot">
-  <div class="foot-mark-row pad"><a href="/" aria-label="${esc(SITE.brand)}, home">${wordmark("foot-mark")}</a></div>
-  <div class="foot-cols pad">
+  <div class="foot-mark-row pad"><a href="/" aria-label="${esc(SITE.brand)}, home">${lockup("lg")}</a></div>
+  <div class="foot-cols pad${social ? "" : " no-social"}">
     <p class="foot-tag">${esc(SITE.tagline)}</p>
-    <nav aria-label="Shop"><h2>Shop</h2><ul>
+    <nav aria-label="Shop"><h2>Collection 01</h2><ul>
       ${PRODUCTS.map(p => `<li><a href="${pUrl(p)}">${esc(p.name)}</a></li>`).join("")}
+      <li><a href="/faq">How ordering works</a></li>
     </ul></nav>
     <nav aria-label="Information"><h2>Information</h2><ul>
       <li><a href="/story">Story</a></li>
-      <li><a href="/faq">FAQ</a></li>
       <li><a href="/shipping">Shipping &amp; returns</a></li>
       <li><a href="/terms">Terms</a></li>
       <li><a href="/privacy">Privacy</a></li>
@@ -73,7 +74,7 @@ function footer() {
     </ul></nav>
     ${social ? `<div><h2>Contact</h2><ul>${social}</ul></div>` : ""}
   </div>
-  <div class="foot-base pad"><span>© ${new Date().getFullYear()} ${esc(SITE.brand)}${legal ? " · " + legal : ""}</span><span>Made in Israel</span></div>
+  <div class="foot-base pad"><span>© ${new Date().getFullYear()} ${esc(SITE.brand)}${legal ? " · " + legal : ""}</span><span>Sewn to order in Israel</span></div>
 </footer>`;
 }
 
@@ -86,18 +87,20 @@ const bagDrawer = `
   </div>
   <div class="d-body pad" id="v-cart"></div>
   <div class="d-foot pad" id="f-cart">
-    <div class="sum"><div class="total"><span>Subtotal</span><span class="price" id="c-sub"></span></div></div>
-    <button class="btn wide" type="button" id="to-details">Continue to checkout</button>
-    <p class="note">${esc(SITE.preorder)}</p>
+    <div class="sum"><div class="total"><span>Subtotal</span><span class="price" id="c-sub"></span></div><div class="mutedv"><span>Delivery</span><span>Complimentary</span></div></div>
+    <button class="btn wide" type="button" id="to-details">Checkout</button>
+    <p class="note">${esc(SITE.preorder)} · ${esc(SITE.leadTime)}</p>
   </div>
   <form class="d-body pad form" id="v-details" novalidate hidden>
-    <button class="link" type="button" id="back-cart">Back to bag</button>
+    <button class="link" type="button" id="back-cart">← Back to bag</button>
+    <p class="step">1 · Contact</p>
     <div class="field"><label for="o-name">Full name</label><input id="o-name" name="name" autocomplete="name" required><p class="err" hidden></p></div>
     <div class="two">
       <div class="field"><label for="o-phone">Phone</label><input id="o-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" required><p class="err" hidden></p></div>
       <div class="field"><label for="o-email">Email <small>optional</small></label><input id="o-email" name="email" type="email" autocomplete="email"><p class="err" hidden></p></div>
     </div>
-    <fieldset><legend class="label">Delivery</legend><div class="ship" id="o-ship"></div></fieldset>
+    <p class="step">2 · Delivery</p>
+    <fieldset><legend class="sr">Delivery method</legend><div class="ship" id="o-ship"></div></fieldset>
     <div id="o-address" class="form">
       <div class="two">
         <div class="field"><label for="o-city">City</label><input id="o-city" name="city" autocomplete="address-level2" required><p class="err" hidden></p></div>
@@ -106,23 +109,29 @@ const bagDrawer = `
       <div class="field"><label for="o-apt">Apartment, floor, entry code <small>optional</small></label><input id="o-apt" name="apt" autocomplete="address-line2"></div>
     </div>
     <div class="field"><label for="o-notes">Notes <small>optional</small></label><textarea id="o-notes" name="notes" rows="2"></textarea></div>
+    <p class="step">3 · Payment</p>
+    <div class="pay">
+      <p><b>Secure payment link</b></p>
+      <p>${esc(SITE.checkout.paymentNote)}</p>
+    </div>
     <label class="check"><input type="checkbox" id="o-terms"><span>I have read and agree to the <a href="/terms" target="_blank">terms</a>, the <a href="/shipping" target="_blank">shipping &amp; returns policy</a> and the <a href="/privacy" target="_blank">privacy policy</a>.</span></label>
     <p class="err" id="o-terms-err" hidden>Please accept the terms to continue</p>
   </form>
   <div class="d-foot pad" id="f-details" hidden>
     <div class="sum" id="o-sum"></div>
-    <button class="btn wide" type="submit" form="v-details" id="o-submit">Send order</button>
+    <button class="btn wide" type="submit" form="v-details" id="o-submit">Place order</button>
     <p class="err" id="o-err" role="alert" hidden></p>
-    <p class="note">${esc(SITE.checkout.note)}</p>
   </div>
   <div class="d-body pad" id="v-done" hidden>
     <div class="done">
+      <img class="done-mark" src="/brand/emblem-sm.webp" alt="" width="130" height="97">
       <p class="eyebrow" id="d-num"></p>
-      <h3>Your order is ready</h3>
-      <p>WhatsApp opens with your order details. Send the message and we'll reply with confirmation, delivery time and payment details.</p>
-      <a class="btn" id="d-wa" href="#" target="_blank" rel="noopener">Open in WhatsApp</a>
+      <h3 id="d-title">Thank you</h3>
+      <p id="d-text"></p>
+      <a class="btn" id="d-wa" href="#" target="_blank" rel="noopener" hidden>Send on WhatsApp</a>
+      <button class="btn" type="button" id="d-copy" hidden>Copy order</button>
       <pre id="d-msg"></pre>
-      <button class="btn ghost" type="button" data-close>Keep browsing</button>
+      <button class="btn ghost" type="button" data-close>Continue browsing</button>
     </div>
   </div>
 </aside>
@@ -131,7 +140,7 @@ const bagDrawer = `
 function layout({ path, title, desc, image, jsonld = [], body, page = "" }) {
   const canonical = abs(path);
   const ogImage = abs(image || "/og.jpg");
-  const fullTitle = title ? `${title} | ${SITE.brand}` : `${SITE.brand} · ${SITE.tagline}`;
+  const fullTitle = title ? `${title} | ${SITE.brand}` : `${SITE.brand} · Collection 01`;
   return `<!doctype html>
 <html lang="en" dir="ltr">
 <head>
@@ -146,16 +155,18 @@ function layout({ path, title, desc, image, jsonld = [], body, page = "" }) {
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${esc(canonical)}">
 <meta property="og:image" content="${esc(ogImage)}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:locale" content="en_IL">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0A0A0A">
 <link rel="icon" href="/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/brand/cinzel-500.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=${fontParam}&family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..400&family=Jost:wght@300..500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..400&family=Jost:wght@300..500&display=swap">
 <link rel="stylesheet" href="/assets/site.css">
-<style>:root{--script:"${esc(SITE.wordmarkFont)}",cursive}</style>
 ${jsonld.map(j => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("\n")}
 <script src="/assets/config.js"></script>
 <script defer src="/assets/store.js"></script>
@@ -173,26 +184,30 @@ ${bagDrawer}
 `;
 }
 
-/* ---------- product card ---------- */
-function card(p, eager = false) {
-  return `
-<article class="card" data-id="${p.id}">
-  <div class="media walk" data-video="/${p.video}">
-    <a class="frame spot" href="${pUrl(p)}" aria-label="${esc(p.name)}, ${esc(p.color)}, ${money(p.price)}">
-      <img src="/${p.poster}" alt="${esc(p.name)} in ${esc(p.color.toLowerCase())}" width="540" height="720" ${eager ? "" : 'loading="lazy"'} decoding="async">
-      <video muted playsinline loop preload="none" aria-hidden="true" tabindex="-1"></video>
-    </a>
-    <div class="quick" role="group" aria-label="Quick add ${esc(p.name)}">
-      <span>Quick add</span>
-      ${SITE.sizes.map(s => `<button type="button" data-add="${p.id}" data-size="${s}" aria-label="Size ${s}">${s}</button>`).join("")}
-    </div>
-  </div>
-  <a class="card-meta" href="${pUrl(p)}" tabindex="-1">
-    <h3 class="card-name">${esc(p.name)}</h3>
-    <p class="card-sub">${esc(p.color)} · <span class="price">${money(p.price)}</span></p>
-  </a>
-</article>`;
-}
+/* ---------- size pickers ---------- */
+const sizePickers = p => p.sizeGroups.map(g => `
+      <fieldset class="sizeset" data-group="${g.key}">
+        <legend class="label">${esc(g.label)}</legend>
+        <div class="sizes" style="--n:${g.sizes.length}">${g.sizes.map(s => `<label><input type="radio" name="size-${g.key}" value="${esc(s)}"><span>${esc(s)}</span></label>`).join("")}</div>
+        <p class="err" data-err="${g.key}" role="alert" hidden>Choose your ${esc(g.label.toLowerCase())}</p>
+      </fieldset>`).join("");
+
+const sizeGuide = p => {
+  const g = p.sizeGuide || {};
+  const tables = Object.values(g).map(t => `
+    <p class="guide-title">${esc(t.title)}</p>
+    <table class="guide">
+      <thead><tr>${t.cols.map(c => `<th scope="col">${esc(c)}</th>`).join("")}</tr></thead>
+      <tbody>${t.rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody>
+    </table>`).join("");
+  return tables ? `
+      <details class="acc-item">
+        <summary>Size guide</summary>
+        <div class="acc-body">${tables}
+          <p class="note">Body measurements. Between two sizes, take the smaller for a cleaner line or the larger for an easier fit.</p>
+        </div>
+      </details>` : "";
+};
 
 /* ---------- pages ---------- */
 const orgLd = {
@@ -203,59 +218,63 @@ const orgLd = {
 const siteLd = { "@context": "https://schema.org", "@type": "WebSite", name: SITE.brand, url: abs("/"), inLanguage: "en" };
 
 function home() {
-  const piece = byId(SITE.hero) || PRODUCTS[0];
+  const p = byId(SITE.hero) || PRODUCTS[0];
   const film = SITE.heroFilm;
-  const hero = film
-    ? { href: "#shop", label: "Shop the collection", video: film.video, poster: film.poster, alt: film.alt }
-    : { href: pUrl(piece), label: piece.name, video: piece.video, poster: piece.poster, alt: `${piece.name} in ${piece.color.toLowerCase()}, walking` };
   const words = SITE.tagline.split(" ");
   const body = `
 <section class="stage" aria-labelledby="hero-line">
-  <a class="stage-spot spot walk is-auto" href="${hero.href}" data-video="/${hero.video}" aria-label="${esc(hero.label)}">
-    <img src="/${hero.poster}" alt="${esc(hero.alt)}" width="600" height="800" fetchpriority="high">
+  <a class="stage-spot spot walk is-auto" href="${pUrl(p)}" data-video="/${film.video}" aria-label="${esc(p.name)}, ${money(p.price)}">
+    <img src="/${film.poster}" alt="${esc(film.alt)}" width="600" height="800" fetchpriority="high">
     <video muted playsinline loop preload="none" aria-hidden="true" tabindex="-1"></video>
   </a>
   <h1 class="stage-line" id="hero-line">${words.map((w, i) => `<span style="--i:${i}">${w === "walk" ? "<em>walk</em>" : esc(w)}</span>`).join(" ")}</h1>
   <div class="credits">
     <span class="lead">Collection 01</span>
-    <span>Made in Israel</span>
-    <span>Made to order</span>
-    <a class="btn-line" href="#shop">Shop the collection</a>
+    <span>${esc(p.name)}</span>
+    <span class="price">${money(p.price)}</span>
+    <a class="btn-line" href="${pUrl(p)}">Shop the set</a>
   </div>
 </section>
 
-<section id="shop" class="shop pad" aria-labelledby="shop-title">
-  <div class="sec-head">
-    <p class="eyebrow">Collection 01</p>
-    <h2 id="shop-title">The first collection</h2>
-    <p class="sub">Four pieces, made to order in Israel</p>
+<section id="shop" class="feature pad" aria-labelledby="set-title">
+  <div class="feature-media">
+    ${p.pieces.map(x => `<figure><a class="frame spot" href="${pUrl(p)}" tabindex="-1"><img src="/${x.image}" alt="${esc(x.name)} in ${esc(x.color.toLowerCase())}" width="600" height="800" loading="lazy" decoding="async"></a><figcaption>${esc(x.name)} · ${esc(x.color)}</figcaption></figure>`).join("")}
   </div>
-  <div class="grid">${PRODUCTS.map((p, i) => card(p, i < 2)).join("")}</div>
+  <div class="feature-info">
+    <p class="eyebrow">Collection 01 · The first drop</p>
+    <h2 id="set-title">${esc(p.name)}</h2>
+    <p class="feature-price"><span class="price">${money(p.price)}</span> <span class="mutedv">· the set</span></p>
+    <p class="feature-lede">${esc(p.lede)}</p>
+    <ol class="pieces">
+      ${p.pieces.map((x, i) => `<li><span class="num">0${i + 1}</span><div><h3>${esc(x.name)} <span>${esc(x.color)}</span></h3><p>${esc(x.desc)}</p></div></li>`).join("")}
+    </ol>
+    <div class="feature-cta">
+      <a class="btn" href="${pUrl(p)}">Choose your sizes</a>
+      <p class="note">${esc(SITE.leadTime)} · Complimentary delivery in Israel</p>
+    </div>
+  </div>
+</section>
+
+<section class="promise pad" aria-label="How it's made">
+  <div><p class="eyebrow">01</p><h3>Sewn to order</h3><p>Your set goes into production only after you order it. No warehouse, no surplus.</p></div>
+  <div><p class="eyebrow">02</p><h3>Made in Israel</h3><p>Cut and sewn in small runs at a factory we work with directly.</p></div>
+  <div><p class="eyebrow">03</p><h3>Two sizes, one set</h3><p>Choose the knit and the trouser waist separately, for a fit that is yours.</p></div>
 </section>
 
 <section class="manifesto pad" aria-labelledby="mf-title">
+  <img class="mf-mark" src="/brand/emblem.webp" alt="" width="720" height="539" loading="lazy">
   <h2 id="mf-title">We don’t make stock.<br><em>We make yours.</em></h2>
-  <p>Every piece goes into production at a factory in Israel only after it’s ordered. No overflowing warehouses, no clothes nobody wears. Small runs, clean cuts, and one strong piece that changes the room.</p>
+  <p>Every set goes into production at a factory in Israel only after it’s ordered. Small runs, clean cuts, quiet colours, and one set that changes the room.</p>
   <a class="btn-line" href="/story">Our story</a>
 </section>`;
   return layout({ path: "/", title: "", desc: SITE.description, jsonld: [orgLd, siteLd], body, page: "home" });
 }
 
 function product(p) {
-  const others = PRODUCTS.filter(x => x.id !== p.id);
-  const gallery = [p.poster, ...(p.images || [])];
-  const guide = SITE.sizeGuide.length ? `
-      <details class="acc-item">
-        <summary>Size guide</summary>
-        <div class="acc-body"><table class="guide">
-          <thead><tr><th scope="col">Size</th><th scope="col">Chest (cm)</th><th scope="col">Length (cm)</th></tr></thead>
-          <tbody>${SITE.sizeGuide.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join("")}</tbody>
-        </table></div>
-      </details>` : "";
-  const ask = SITE.whatsapp ? `<a class="ask" href="${esc(wa(`Hi, I have a question about the ${p.name} (${p.color})`))}" target="_blank" rel="noopener">Questions about this piece? Message us on WhatsApp</a>` : "";
+  const ask = SITE.whatsapp ? `<a class="ask" href="${esc(wa(`Hi, I have a question about ${p.name}`))}" target="_blank" rel="noopener">Questions about sizing? Message us on WhatsApp</a>` : "";
   const ld = [{
-    "@context": "https://schema.org", "@type": "Product", name: `${p.name} ${p.color}`, description: p.seoDesc,
-    image: gallery.map(g => abs("/" + g)), sku: p.id, color: p.color,
+    "@context": "https://schema.org", "@type": "Product", name: p.name, description: p.seoDesc,
+    image: [p.poster, ...(p.images || [])].map(g => abs("/" + g)), sku: p.id, color: p.color,
     brand: { "@type": "Brand", name: SITE.brand },
     offers: { "@type": "Offer", url: abs(pUrl(p)), priceCurrency: "ILS", price: String(p.price),
       availability: "https://schema.org/PreOrder", itemCondition: "https://schema.org/NewCondition",
@@ -263,52 +282,50 @@ function product(p) {
   }, {
     "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: abs("/") },
-      { "@type": "ListItem", position: 2, name: "Collection", item: abs("/#shop") },
+      { "@type": "ListItem", position: 2, name: "Collection 01", item: abs("/#shop") },
       { "@type": "ListItem", position: 3, name: p.name, item: abs(pUrl(p)) }
     ]
   }];
   const body = `
-<nav class="crumbs pad" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/#shop">Collection</a><span aria-hidden="true">/</span><span aria-current="page">${esc(p.name)}</span></nav>
+<nav class="crumbs pad" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/#shop">Collection 01</a><span aria-hidden="true">/</span><span aria-current="page">${esc(p.name)}</span></nav>
 <div class="pdp pad" data-product="${p.id}">
   <div class="pdp-media">
     <div class="pdp-frame spot walk is-auto" data-video="/${p.video}">
-      <img src="/${p.poster}" alt="${esc(p.name)} in ${esc(p.color.toLowerCase())}, render in motion" width="540" height="720" fetchpriority="high" id="pdp-img">
+      <img src="/${p.poster}" alt="${esc(p.name)}: bordeaux half-zip knit and ivory pleated trousers, in motion" width="600" height="800" fetchpriority="high" id="pdp-img">
       <video muted playsinline loop preload="none" aria-hidden="true" tabindex="-1"></video>
     </div>
-    ${gallery.length > 1 ? `<div class="thumbs" role="group" aria-label="Images">${gallery.map((g, i) => `<button type="button" data-src="/${g}" aria-label="Image ${i + 1}"${i ? "" : ' aria-current="true"'}><img src="/${g}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}
+    ${p.images && p.images.length ? `<div class="thumbs" role="group" aria-label="Images">${[p.poster, ...p.images].map((g, i) => `<button type="button" data-src="/${g}" aria-label="${["The set in motion", ...p.pieces.map(x => x.name)][i] || "Image " + (i + 1)}"${i ? "" : ' aria-current="true"'}><img src="/${g}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}
   </div>
   <div class="pdp-info">
     <p class="eyebrow">${esc(SITE.preorder)}</p>
     <h1>${esc(p.name)}</h1>
-    <p class="pdp-price"><span class="price">${money(p.price)}</span></p>
-    <p class="pdp-color">Colour: ${esc(p.color)}</p>
+    <p class="pdp-price"><span class="price">${money(p.price)}</span> <span class="mutedv">· two pieces</span></p>
+    <p class="pdp-color">${p.pieces.map(x => `${esc(x.name.replace(/^The /, ""))} — ${esc(x.color)}`).join(" · ")}</p>
     <form class="buy" id="buy" novalidate>
-      <fieldset>
-        <legend class="label">Size</legend>
-        <div class="sizes">${SITE.sizes.map(s => `<label><input type="radio" name="size" value="${s}"><span>${s}</span></label>`).join("")}</div>
-      </fieldset>
-      <p class="err" id="size-err" role="alert" hidden>Choose a size</p>
-      <button class="btn wide" type="submit">Add to bag</button>
+      ${sizePickers(p)}
+      <button class="btn wide" type="submit">Add the set to bag · ${money(p.price)}</button>
+      <ul class="assure">
+        <li>${esc(SITE.leadTime)}</li>
+        <li>Complimentary courier delivery in Israel</li>
+        <li>Nothing is charged until we confirm your order</li>
+      </ul>
     </form>
     ${ask}
     <div class="acc">
-      <details class="acc-item" open><summary>Description</summary><div class="acc-body"><p>${esc(p.desc)}</p></div></details>
+      <details class="acc-item" open><summary>The set</summary><div class="acc-body"><p>${esc(p.lede)}</p></div></details>
+      ${p.pieces.map(x => `<details class="acc-item"><summary>${esc(x.name)} · ${esc(x.color)}</summary><div class="acc-body"><p>${esc(x.desc)}</p><ul>${x.details.map(d => `<li>${esc(d)}</li>`).join("")}</ul></div></details>`).join("")}
+      ${sizeGuide(p)}
       <details class="acc-item"><summary>Details</summary><div class="acc-body"><ul>${p.details.map(d => `<li>${esc(d)}</li>`).join("")}</ul></div></details>
-      ${guide}
-      <details class="acc-item"><summary>Shipping &amp; returns</summary><div class="acc-body"><p>Made to order. Your delivery time is confirmed with your order, before payment. Purchases can be cancelled under Israel’s Consumer Protection Law. <a href="/shipping">Full details</a></p></div></details>
+      <details class="acc-item"><summary>Shipping &amp; returns</summary><div class="acc-body"><p>Sewn to order; your delivery date is confirmed with your order, before payment. Courier delivery is complimentary across Israel. Purchases can be cancelled under Israel’s Consumer Protection Law. <a href="/shipping">Full details</a></p></div></details>
     </div>
     <div class="pdp-foot"><p class="note">${esc(SITE.renderNote)}</p><button class="link" type="button" data-share>Copy link</button></div>
   </div>
 </div>
-<section class="related pad" aria-labelledby="rel-title">
-  <div class="sec-head"><h2 id="rel-title">More from the collection</h2></div>
-  <div class="grid three">${others.map(o => card(o)).join("")}</div>
-</section>
 <div class="buybar" id="buybar">
   <div><b>${esc(p.name)}</b><span class="price">${money(p.price)}</span></div>
   <button class="btn" type="button" id="buybar-btn">Add to bag</button>
 </div>`;
-  return layout({ path: pUrl(p), title: p.seoTitle, desc: p.seoDesc, image: "/" + p.poster, jsonld: ld, body, page: "product" });
+  return layout({ path: pUrl(p), title: p.seoTitle, desc: p.seoDesc, jsonld: ld, body, page: "product" });
 }
 
 function doc(path, title, desc, inner, jsonld = []) {
@@ -316,65 +333,66 @@ function doc(path, title, desc, inner, jsonld = []) {
 }
 
 function story() {
-  const p = byId("pants");
-  return layout({ path: "/story", title: "Story", desc: "The story of La Elegant: elegance as the way you walk into a room, and clothes made to order in Israel in small runs.", page: "story", body: `
+  const p = PRODUCTS[0];
+  return layout({ path: "/story", title: "Story", desc: "The story of La Elegant: elegance as the way you walk into a room, and clothes sewn to order in Israel in small runs.", page: "story", body: `
 <section class="story-hero pad">
-  <p class="eyebrow">Story</p>
+  <img class="story-mark" src="/brand/emblem.webp" alt="" width="720" height="539">
+  <p class="eyebrow">Story · ${esc(SITE.est)}</p>
   <h1>Elegance is how you <em>walk</em> into a room.</h1>
 </section>
 <section class="story pad">
-  <div class="story-img spot walk is-auto" data-video="/${p.video}"><img src="/${p.poster}" alt="${esc(p.name)} in motion" width="540" height="720" loading="lazy"><video muted playsinline loop preload="none" aria-hidden="true" tabindex="-1"></video></div>
+  <div class="story-img spot walk is-auto" data-video="/${p.video}"><img src="/${p.poster}" alt="${esc(p.name)} in motion" width="600" height="800" loading="lazy"><video muted playsinline loop preload="none" aria-hidden="true" tabindex="-1"></video></div>
   <div class="story-text">
     <h2>The walk</h2>
-    <p>Elegance isn’t a price tag. It’s the walk, the shoulders, the line. The moment someone sees you before you’ve said a word. That’s why every piece here is shown in motion: good clothes look best when you walk in them.</p>
+    <p>Elegance isn’t a logo on the chest. It’s the walk, the shoulders, the line — the moment someone sees you before you’ve said a word. That’s why every piece here is shown in motion: good clothes look best when you walk in them.</p>
+    <h2>Quiet, on purpose</h2>
+    <p>No loud prints, no one-season trends. Deep colours, clean cuts and fabrics that hold their shape. Clothes for people who would rather be remembered than noticed.</p>
     <h2>No stock</h2>
-    <p>Most labels make thousands of units and hope they sell. We work the other way round: every piece goes into production only after it’s ordered. No overflowing warehouses, no surplus, no clothes thrown away.</p>
+    <p>Most labels make thousands of units and hope they sell. We work the other way round: every set goes into production only after it’s ordered. No overflowing warehouses, no surplus, no clothes thrown away.</p>
     <h2>Made in Israel</h2>
     <p>The collection is sewn at a factory in Israel, in small runs. We work directly with the factory, choose the fabrics ourselves and check every cut before it reaches you.</p>
-    <h2>Cuts that stay</h2>
-    <p>No one-season trends. Clean cuts, quiet colours, and one strong piece that makes the difference.</p>
-    <a class="btn" href="/#shop">Shop the collection</a>
+    <a class="btn" href="${pUrl(p)}">Shop the set</a>
   </div>
 </section>` });
 }
 
 function faq() {
   const ld = [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: FAQ.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) }];
-  return doc("/faq", "FAQ", "Answers about pre-orders, payment, delivery times, sizing, returns and production in Israel.", `
+  return doc("/faq", "FAQ", "Answers about ordering, payment, delivery times, sizing, returns and production in Israel.", `
 <p class="eyebrow">Help</p>
 <h1>Frequently asked questions</h1>
 <div class="acc">${FAQ.map(([q, a], i) => `<details class="acc-item"${i ? "" : " open"}><summary>${esc(q)}</summary><div class="acc-body"><p>${esc(a)}</p></div></details>`).join("")}</div>
-<p>Didn’t find your answer? ${SITE.whatsapp ? `<a href="${esc(wa("Hi, I have a question"))}" target="_blank" rel="noopener">Message us on WhatsApp</a>` : "Message us"} and we’ll get back to you.</p>`, ld);
+<p>Didn’t find your answer? ${SITE.whatsapp ? `<a href="${esc(wa("Hi, I have a question"))}" target="_blank" rel="noopener">Message us on WhatsApp</a> and we’ll get back to you.` : contactLine ? `Reach us by ${contactLine}.` : "Send us a message and we’ll get back to you."}</p>`, ld);
 }
 
 function shipping() {
-  return doc("/shipping", "Shipping & returns", "Shipping, cancellation and returns policy: pre-orders, delivery times and cancellation under Israel’s Consumer Protection Law.", `
+  return doc("/shipping", "Shipping & returns", "Shipping, cancellation and returns policy: made-to-order sets, delivery times and cancellation under Israel’s Consumer Protection Law.", `
 <h1>Shipping, cancellation &amp; returns</h1>
 <p class="updated">Last updated: ${TODAY}</p>
-<h2>Pre-order</h2>
-<p>Pieces on this site are made to order at a factory in Israel. After you send your order, we reply with confirmation, an estimated delivery time and payment details. Payment is taken only after confirmation.</p>
+<h2>Made to order</h2>
+<p>Every set is sewn to order at a factory in Israel. After you place your order, we confirm your sizes and an estimated delivery date and send a secure payment link. Production starts once payment is received.</p>
 <h2>Shipping</h2>
 <ul>
-${SITE.shipping.map(s => `<li>${esc(s.label)}: ${s.price == null ? "cost confirmed with your order" : s.price ? money(s.price) : "free"}.</li>`).join("\n")}
-<li>Delivery time is confirmed with your order and depends on the production time of each piece.</li>
-<li>If production or delivery is delayed, we’ll let you know as soon as possible by WhatsApp or email.</li>
+${SITE.shipping.map(s => `<li>${esc(s.label)}: ${s.price == null ? "cost confirmed with your order" : s.price ? money(s.price) : "complimentary"}.</li>`).join("\n")}
+<li>${esc(SITE.leadTime)} from payment. The exact date is confirmed with your order.</li>
+<li>If production or delivery is delayed, we’ll let you know as soon as possible.</li>
 </ul>
 <h2>Cancelling a purchase</h2>
 <p>You may cancel a purchase in accordance with Israel’s Consumer Protection Law, 5741-1981, and its regulations:</p>
 <ul>
-<li>Send a written cancellation notice (WhatsApp or email) within 14 days of receiving the product or the document with the transaction details, whichever is later.</li>
+<li>Send a written cancellation notice within 14 days of receiving the product or the document with the transaction details, whichever is later.</li>
 <li>Cancellation fee: 5% of the transaction price or ₪100, whichever is lower.</li>
 <li>Refunds are made to the original payment method.</li>
 </ul>
 <h2>Returning an item</h2>
 <ul>
-<li>Items must be returned in their original condition, undamaged and unused, with tags attached.</li>
+<li>Items must be returned in their original condition, undamaged and unworn, with tags attached.</li>
 <li>Return details (address or pickup) are provided when you contact us.</li>
 </ul>
 <h2>Size exchange</h2>
-<p>Not sure about your size? Message us before ordering. If the size doesn’t fit after delivery, contact us within 14 days and we’ll look into an exchange.</p>
+<p>Not sure about your size? Message us before ordering. If the size isn’t right after delivery, contact us within 14 days and we’ll look into an exchange.</p>
 <h2>Contact</h2>
-<p>${contactLine}</p>`);
+<p>${contactSentence}</p>`);
 }
 
 function terms() {
@@ -382,27 +400,27 @@ function terms() {
 <h1>Terms of use</h1>
 <p class="updated">Last updated: ${TODAY}</p>
 <h2>1. General</h2>
-<p>The website ${esc(SITE.url.replace(/^https?:\/\//, ""))} (the “Site”) is operated by ${bizName}, business no. ${bizId} (the “Business”), under the brand ${esc(SITE.brand)}. Using the Site or placing an order constitutes acceptance of these terms.</p>
-<h2>2. Pre-orders and production</h2>
-<p>Pieces are made to order. Sending an order on the Site is a request to purchase; the transaction becomes binding only after the Business confirms it and payment is made. The Business may decline an order, for example if a piece does not go into production. In that case no payment is taken, and any payment made is refunded in full.</p>
+<p>This website (the “Site”) is operated under the brand ${esc(SITE.brand)}${operator ? ` by ${operator}` : ""} (“we”, “us”). Using the Site or placing an order constitutes acceptance of these terms.</p>
+<h2>2. Orders and production</h2>
+<p>Pieces are sewn to order. Placing an order on the Site is a request to purchase; the transaction becomes binding only after we confirm it and payment is made. We may decline an order, for example if a size cannot be produced. In that case no payment is taken, and any payment made is refunded in full.</p>
 <h2>3. Prices and payment</h2>
-<p>Prices are in Israeli new shekels. Delivery cost, if any, is shown or confirmed before payment. Payment details are sent after the order is confirmed.</p>
+<p>Prices are in Israeli new shekels and include VAT where applicable. Delivery cost, if any, is shown before payment. A secure payment link is sent after the order is confirmed.</p>
 <h2>4. Delivery</h2>
-<p>An estimated delivery time is given with the order confirmation. See the <a href="/shipping">shipping &amp; returns policy</a>.</p>
+<p>An estimated delivery date is given with the order confirmation. See the <a href="/shipping">shipping &amp; returns policy</a>.</p>
 <h2>5. Cancellation and returns</h2>
 <p>Cancellations and returns are handled under Israel’s Consumer Protection Law, as set out in the <a href="/shipping">shipping &amp; returns policy</a>.</p>
 <h2>6. Images and descriptions</h2>
-<p>Some images on the Site are renders of the design. We aim to show every piece accurately, but slight differences in shade and texture between an image and the actual piece may occur.</p>
+<p>We aim to show every piece accurately, but slight differences in shade and texture between an image on screen and the actual piece may occur.</p>
 <h2>7. Intellectual property</h2>
-<p>All content on the Site, including designs, images, videos, text and the ${esc(SITE.brand)} mark, belongs to the Business and may not be copied or used without written permission.</p>
+<p>All content on the Site, including designs, images, videos, text and the ${esc(SITE.brand)} name and emblem, belongs to us and may not be copied or used without written permission.</p>
 <h2>8. Privacy</h2>
 <p>Use of personal information is described in the <a href="/privacy">privacy policy</a>.</p>
 <h2>9. Changes</h2>
-<p>The Business may update these terms from time to time. An order is governed by the version in force when it was sent.</p>
+<p>We may update these terms from time to time. An order is governed by the version in force when it was placed.</p>
 <h2>10. Governing law</h2>
 <p>These terms are governed by the laws of the State of Israel, and the competent courts in Israel have jurisdiction.</p>
-<h2>11. Business details</h2>
-<p>${bizName} · ${bizId} · ${bizAddr}<br>${contactLine}</p>`);
+<h2>11. Contact</h2>
+<p>${bizBlock ? bizBlock + "<br>" : ""}${contactSentence}</p>`);
 }
 
 function privacy() {
@@ -423,17 +441,17 @@ function privacy() {
 </ul>
 <p>We won’t send you marketing messages without your explicit consent.</p>
 <h2>Who we share it with</h2>
-<p>Only those needed to fulfil your order: the courier, the payment provider, and the messaging service (WhatsApp) through which the order is sent. We never sell your information.</p>
+<p>Only those needed to fulfil your order: the courier, the payment provider and the messaging service through which your order is sent. We never sell your information.</p>
 <h2>Storage and security</h2>
-<p>Information is kept only as long as needed to handle your order and meet legal obligations. Card details are never stored on this site.</p>
+<p>Information is kept only as long as needed to handle your order and meet legal obligations. Card details are never entered on or stored by this site.</p>
 <h2>Your rights</h2>
 <p>Under Israel’s Protection of Privacy Law, 5741-1981, you may ask to review, correct or delete information about you by contacting us.</p>
 <h2>Contact</h2>
-<p>${bizName} · ${contactLine}</p>`);
+<p>${bizBlock ? bizBlock + "<br>" : ""}${contactSentence}</p>`);
 }
 
 function accessibility() {
-  return doc("/accessibility", "Accessibility", "La Elegant accessibility statement: what has been done, known limitations and the accessibility contact.", `
+  return doc("/accessibility", "Accessibility", "La Elegant accessibility statement: what has been done, known limitations and how to contact us.", `
 <h1>Accessibility statement</h1>
 <p class="updated">Last updated: ${TODAY}</p>
 <p>We want everyone to be able to browse and order on this site with ease. The site was built following Israeli Standard 5568 for web content accessibility, based on WCAG 2.0 level AA.</p>
@@ -443,19 +461,19 @@ function accessibility() {
 <li>The whole site can be used with a keyboard, with a visible focus indicator and a “skip to content” link.</li>
 <li>Every product image has a text alternative.</li>
 <li>High-contrast text on a dark background.</li>
-<li>Videos are silent and only show the garment in motion. If your device is set to reduce motion, you see a still image instead.</li>
+<li>Videos are silent and only show the garments in motion. If your device is set to reduce motion, you see a still image instead.</li>
 <li>Form fields have labels, and error messages appear as text next to the field.</li>
 <li>The site works on phones and with browser text zoom.</li>
 </ul>
 <h2>Known limitations</h2>
-<p>We keep testing the site. If any part isn’t accessible to you, we’ll gladly help you complete your order by phone or WhatsApp.</p>
+<p>We keep testing the site. If any part isn’t accessible to you, we’ll gladly help you complete your order directly.</p>
 <h2>Accessibility contact</h2>
-<p>${val(B.accessibilityContact)} · ${contactLine}</p>`);
+<p>${B.accessibilityContact ? esc(B.accessibilityContact) + "<br>" : ""}${contactSentence}</p>`);
 }
 
 function notFound() {
   return layout({ path: "/404", title: "Page not found", desc: "Page not found.", page: "doc", body: `
-<article class="doc pad nf"><p class="eyebrow">404</p><h1>This page doesn’t exist.</h1><p>The collection does.</p><a class="btn" href="/#shop">Shop the collection</a></article>` });
+<article class="doc pad nf"><p class="eyebrow">404</p><h1>This page doesn’t exist.</h1><p>The set does.</p><a class="btn" href="${pUrl(PRODUCTS[0])}">Shop the set</a></article>` });
 }
 
 /* ---------- write ---------- */
@@ -469,11 +487,12 @@ if (existsSync(OUT)) rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 cpSync(join(SRC, "media"), join(OUT, "media"), { recursive: true });
 cpSync(join(SRC, "assets"), join(OUT, "assets"), { recursive: true });
+cpSync(join(SRC, "brand"), join(OUT, "brand"), { recursive: true });
 cpSync(join(SRC, "static"), OUT, { recursive: true });
 
 write("assets/config.js", "window.SHOP = " + JSON.stringify({
-  brand: SITE.brand, whatsapp: SITE.whatsapp, checkout: SITE.checkout, shipping: SITE.shipping, sizes: SITE.sizes,
-  products: PRODUCTS.map(({ id, slug, name, color, price, poster }) => ({ id, slug, name, color, price, poster }))
+  brand: SITE.brand, whatsapp: SITE.whatsapp, checkout: SITE.checkout, shipping: SITE.shipping, leadTime: SITE.leadTime,
+  products: PRODUCTS.map(({ id, slug, name, color, price, poster, sizeGroups }) => ({ id, slug, name, color, price, poster, sizeGroups }))
 }) + ";\n");
 
 write("index.html", home());
