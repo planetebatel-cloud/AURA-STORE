@@ -1,11 +1,36 @@
 {
   "framework": null,
-  "buildCommand": "node src/build.mjs",
+  "buildCommand": "node src/build.mjs && SITE_BASE=/la-elegant SITE_OUT=public/la-elegant SITE_URL=https://aurastorebro.vercel.app/la-elegant node la-elegant/src/build.mjs",
   "outputDirectory": "public",
   "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
-    { "source": "/media/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] },
-    { "source": "/assets/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=600" }] }
+    {
+      "source": "/media/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=600"
+        }
+      ]
+    },
+    {
+      "source": "/la-elegant/(media|brand)/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800"
+        }
+      ]
+    }
   ]
 }
