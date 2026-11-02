@@ -1,7 +1,7 @@
 /* Layout: a dark cinema. One figure walks in a spotlight on a black stage; the hand-drawn
    winged-star emblem over a classic serif wordmark; quiet serif lines; reading pages stay dark. */
-@font-face { font-family: "Cinzel"; src: url("/brand/cinzel-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
-@font-face { font-family: "Cinzel"; src: url("/brand/cinzel-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Cinzel"; src: url("../brand/cinzel-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Cinzel"; src: url("../brand/cinzel-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 :root {
   --bg: #0A0A0A;
   --bg-2: #131313;

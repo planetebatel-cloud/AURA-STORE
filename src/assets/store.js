@@ -1,6 +1,7 @@
 /* LA ELEGANT storefront runtime: walking media, bag, checkout, product page. */
 (function () {
   const S = window.SHOP || { products: [], shipping: [], checkout: {} };
+  const BASE = S.base || "";
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
   const money = n => "₪" + Number(n).toLocaleString("en-US");
@@ -170,15 +171,15 @@
     const box = $("#v-cart"), foot = $("#f-cart");
     if (!bag.length) {
       const first = S.products[0];
-      box.innerHTML = `<div class="empty"><p>Your bag is empty.</p><a class="btn ghost" href="/products/${first ? first.slug : ""}" data-close>Shop the set</a></div>`;
+      box.innerHTML = `<div class="empty"><p>Your bag is empty.</p><a class="btn ghost" href="${BASE}/products/${first ? first.slug : ""}" data-close>Shop the set</a></div>`;
       foot.hidden = true;
       return;
     }
     foot.hidden = false;
     box.innerHTML = bag.map((l, i) => {
-      const p = byId(l.id), url = "/products/" + p.slug;
+      const p = byId(l.id), url = BASE + "/products/" + p.slug;
       return `<div class="line">
-        <a class="thumb" href="${url}" tabindex="-1"><img src="/${p.poster}" alt=""></a>
+        <a class="thumb" href="${url}" tabindex="-1"><img src="${BASE}/${p.poster}" alt=""></a>
         <div class="line-info">
           <div class="line-top"><a href="${url}">${esc(p.name)}</a><span class="price">${money(p.price * l.qty)}</span></div>
           <span class="line-sub">${esc(p.color)}</span>

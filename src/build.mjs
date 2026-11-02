@@ -1,17 +1,21 @@
 // Static site builder: src/ → public/. Node built-ins only (runs on Vercel as the build command).
 import { SITE, PRODUCTS, FAQ } from "./data.mjs";
 import { mkdirSync, writeFileSync, cpSync, rmSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const SRC = dirname(fileURLToPath(import.meta.url));
-const OUT = join(SRC, "..", "public");
+// SITE_BASE lets the same site run under a sub-path (e.g. /la-elegant); SITE_OUT / SITE_URL override output folder and public address.
+const BASE = (process.env.SITE_BASE || "").replace(/\/$/, "");
+const OUT = process.env.SITE_OUT ? resolve(process.cwd(), process.env.SITE_OUT) : join(SRC, "..", "public");
+if (process.env.SITE_URL) SITE.url = process.env.SITE_URL;
 const TODAY = new Date().toISOString().slice(0, 10);
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const abs = p => SITE.url.replace(/\/$/, "") + p;
 const money = n => "₪" + Number(n).toLocaleString("en-US");
-const pUrl = p => "/products/" + p.slug;
+const pPath = p => "/products/" + p.slug;
+const pUrl = p => BASE + pPath(p);
 const byId = id => PRODUCTS.find(p => p.id === id);
 const phoneText = n => n ? "0" + String(n).replace(/^972/, "").replace(/(\d{2})(\d{3})(\d{4})$/, "$1-$2-$3") : "";
 const wa = text => SITE.whatsapp ? "https://wa.me/" + SITE.whatsapp + (text ? "?text=" + encodeURIComponent(text) : "") : "";
@@ -27,7 +31,7 @@ const operator = B.name ? `${esc(B.name)}${B.id ? `, business no. ${esc(B.id)}` 
 const bizBlock = [B.name && esc(B.name), B.id && "Business no. " + esc(B.id), B.address && esc(B.address)].filter(Boolean).join(" · ");
 
 /* ---------- brand lockup (emblem + serif wordmark) ---------- */
-const lockup = (cls = "") => `<span class="lockup ${cls}"><img class="lk-emblem" src="/brand/${cls.includes("lg") ? "emblem" : "emblem-sm"}.webp" alt="" width="${cls.includes("lg") ? 720 : 260}" height="${cls.includes("lg") ? 539 : 195}"><span class="lk-word">${esc(SITE.brand)}</span><span class="lk-est"><i></i>${esc(SITE.est)}<i></i></span></span>`;
+const lockup = (cls = "") => `<span class="lockup ${cls}"><img class="lk-emblem" src="${BASE}/brand/${cls.includes("lg") ? "emblem" : "emblem-sm"}.webp" alt="" width="${cls.includes("lg") ? 720 : 260}" height="${cls.includes("lg") ? 539 : 195}"><span class="lk-word">${esc(SITE.brand)}</span><span class="lk-est"><i></i>${esc(SITE.est)}<i></i></span></span>`;
 
 function header(page) {
   return `
@@ -38,11 +42,11 @@ function header(page) {
       <button class="menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="menu">Menu</button>
       <nav class="nav" id="menu" aria-label="Main">
         <a href="${pUrl(PRODUCTS[0])}">The Set</a>
-        <a href="/story">Story</a>
-        <a href="/faq">FAQ</a>
+        <a href="${BASE}/story">Story</a>
+        <a href="${BASE}/faq">FAQ</a>
       </nav>
     </div>
-    <a class="head-mark" href="/" aria-label="${esc(SITE.brand)}, home">${lockup("sm")}</a>
+    <a class="head-mark" href="${BASE}/" aria-label="${esc(SITE.brand)}, home">${lockup("sm")}</a>
     <button class="bag-btn" id="bag-open" type="button" aria-haspopup="dialog">Bag <span class="count" id="bag-count">0</span></button>
   </div>
 </header>`;
@@ -58,19 +62,19 @@ function footer() {
   const legal = [B.name, B.id ? "Business no. " + B.id : ""].filter(Boolean).map(esc).join(" · ");
   return `
 <footer class="foot">
-  <div class="foot-mark-row pad"><a href="/" aria-label="${esc(SITE.brand)}, home">${lockup("lg")}</a></div>
+  <div class="foot-mark-row pad"><a href="${BASE}/" aria-label="${esc(SITE.brand)}, home">${lockup("lg")}</a></div>
   <div class="foot-cols pad${social ? "" : " no-social"}">
     <p class="foot-tag">${esc(SITE.tagline)}</p>
     <nav aria-label="Shop"><h2>Collection 01</h2><ul>
       ${PRODUCTS.map(p => `<li><a href="${pUrl(p)}">${esc(p.name)}</a></li>`).join("")}
-      <li><a href="/faq">How ordering works</a></li>
+      <li><a href="${BASE}/faq">How ordering works</a></li>
     </ul></nav>
     <nav aria-label="Information"><h2>Information</h2><ul>
-      <li><a href="/story">Story</a></li>
-      <li><a href="/shipping">Shipping &amp; returns</a></li>
-      <li><a href="/terms">Terms</a></li>
-      <li><a href="/privacy">Privacy</a></li>
-      <li><a href="/accessibility">Accessibility</a></li>
+      <li><a href="${BASE}/story">Story</a></li>
+      <li><a href="${BASE}/shipping">Shipping &amp; returns</a></li>
+      <li><a href="${BASE}/terms">Terms</a></li>
+      <li><a href="${BASE}/privacy">Privacy</a></li>
+      <li><a href="${BASE}/accessibility">Accessibility</a></li>
     </ul></nav>
     ${social ? `<div><h2>Contact</h2><ul>${social}</ul></div>` : ""}
   </div>
@@ -114,7 +118,7 @@ const bagDrawer = `
       <p><b>Secure payment link</b></p>
       <p>${esc(SITE.checkout.paymentNote)}</p>
     </div>
-    <label class="check"><input type="checkbox" id="o-terms"><span>I have read and agree to the <a href="/terms" target="_blank">terms</a>, the <a href="/shipping" target="_blank">shipping &amp; returns policy</a> and the <a href="/privacy" target="_blank">privacy policy</a>.</span></label>
+    <label class="check"><input type="checkbox" id="o-terms"><span>I have read and agree to the <a href="${BASE}/terms" target="_blank">terms</a>, the <a href="${BASE}/shipping" target="_blank">shipping &amp; returns policy</a> and the <a href="${BASE}/privacy" target="_blank">privacy policy</a>.</span></label>
     <p class="err" id="o-terms-err" hidden>Please accept the terms to continue</p>
   </form>
   <div class="d-foot pad" id="f-details" hidden>
@@ -124,7 +128,7 @@ const bagDrawer = `
   </div>
   <div class="d-body pad" id="v-done" hidden>
     <div class="done">
-      <img class="done-mark" src="/brand/emblem-sm.webp" alt="" width="130" height="97">
+      <img class="done-mark" src="${BASE}/brand/emblem-sm.webp" alt="" width="130" height="97">
       <p class="eyebrow" id="d-num"></p>
       <h3 id="d-title">Thank you</h3>
       <p id="d-text"></p>
@@ -160,16 +164,16 @@ function layout({ path, title, desc, image, jsonld = [], body, page = "" }) {
 <meta property="og:locale" content="en_IL">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0A0A0A">
-<link rel="icon" href="/favicon.png" type="image/png">
-<link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link rel="preload" href="/brand/cinzel-500.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="${BASE}/favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="${BASE}/apple-touch-icon.png">
+<link rel="preload" href="${BASE}/brand/cinzel-500.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..400&family=Jost:wght@300..500&display=swap">
-<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="${BASE}/assets/site.css">
 ${jsonld.map(j => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`).join("\n")}
-<script src="/assets/config.js"></script>
-<script defer src="/assets/store.js"></script>
+<script src="${BASE}/assets/config.js"></script>
+<script defer src="${BASE}/assets/store.js"></script>
 <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body class="page-${page || "doc"}">
@@ -223,8 +227,8 @@ function home() {
   const words = SITE.tagline.split(" ");
   const body = `
 <section class="stage" aria-labelledby="hero-line">
-  <a class="stage-spot spot walk is-auto" href="${pUrl(p)}" data-video="/${film.video}" aria-label="${esc(p.name)}, ${money(p.price)}">
-    <img src="/${film.poster}" alt="${esc(film.alt)}" width="600" height="800" fetchpriority="high">
+  <a class="stage-spot spot walk is-auto" href="${pUrl(p)}" data-video="${BASE}/${film.video}" aria-label="${esc(p.name)}, ${money(p.price)}">
+    <img src="${BASE}/${film.poster}" alt="${esc(film.alt)}" width="600" height="800" fetchpriority="high">
     <video muted playsinline loop preload="none" aria-hidden="true" tabindex="-1"></video>
   </a>
   <h1 class="stage-line" id="hero-line">${words.map((w, i) => `<span style="--i:${i}">${w === "walk" ? "<em>walk</em>" : esc(w)}</span>`).join(" ")}</h1>
@@ -238,7 +242,7 @@ function home() {
 
 <section id="shop" class="feature pad" aria-labelledby="set-title">
   <div class="feature-media">
-    ${p.pieces.map(x => `<figure><a class="frame spot" href="${pUrl(p)}" tabindex="-1"><img src="/${x.image}" alt="${esc(x.name)} in ${esc(x.color.toLowerCase())}" width="600" height="800" loading="lazy" decoding="async"></a><figcaption>${esc(x.name)} · ${esc(x.color)}</figcaption></figure>`).join("")}
+    ${p.pieces.map(x => `<figure><a class="frame spot" href="${pUrl(p)}" tabindex="-1"><img src="${BASE}/${x.image}" alt="${esc(x.name)} in ${esc(x.color.toLowerCase())}" width="600" height="800" loading="lazy" decoding="async"></a><figcaption>${esc(x.name)} · ${esc(x.color)}</figcaption></figure>`).join("")}
   </div>
   <div class="feature-info">
     <p class="eyebrow">Collection 01 · The first drop</p>
@@ -262,10 +266,10 @@ function home() {
 </section>
 
 <section class="manifesto pad" aria-labelledby="mf-title">
-  <img class="mf-mark" src="/brand/emblem.webp" alt="" width="720" height="539" loading="lazy">
+  <img class="mf-mark" src="${BASE}/brand/emblem.webp" alt="" width="720" height="539" loading="lazy">
   <h2 id="mf-title">We don’t make stock.<br><em>We make yours.</em></h2>
   <p>Every set goes into production at a factory in Israel only after it’s ordered. Small runs, clean cuts, quiet colours, and one set that changes the room.</p>
-  <a class="btn-line" href="/story">Our story</a>
+  <a class="btn-line" href="${BASE}/story">Our story</a>
 </section>`;
   return layout({ path: "/", title: "", desc: SITE.description, jsonld: [orgLd, siteLd], body, page: "home" });
 }
@@ -276,25 +280,25 @@ function product(p) {
     "@context": "https://schema.org", "@type": "Product", name: p.name, description: p.seoDesc,
     image: [p.poster, ...(p.images || [])].map(g => abs("/" + g)), sku: p.id, color: p.color,
     brand: { "@type": "Brand", name: SITE.brand },
-    offers: { "@type": "Offer", url: abs(pUrl(p)), priceCurrency: "ILS", price: String(p.price),
+    offers: { "@type": "Offer", url: abs(pPath(p)), priceCurrency: "ILS", price: String(p.price),
       availability: "https://schema.org/PreOrder", itemCondition: "https://schema.org/NewCondition",
       seller: { "@type": "Organization", name: SITE.brand } }
   }, {
     "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: abs("/") },
       { "@type": "ListItem", position: 2, name: "Collection 01", item: abs("/#shop") },
-      { "@type": "ListItem", position: 3, name: p.name, item: abs(pUrl(p)) }
+      { "@type": "ListItem", position: 3, name: p.name, item: abs(pPath(p)) }
     ]
   }];
   const body = `
-<nav class="crumbs pad" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/#shop">Collection 01</a><span aria-hidden="true">/</span><span aria-current="page">${esc(p.name)}</span></nav>
+<nav class="crumbs pad" aria-label="Breadcrumb"><a href="${BASE}/">Home</a><span aria-hidden="true">/</span><a href="${BASE}/#shop">Collection 01</a><span aria-hidden="true">/</span><span aria-current="page">${esc(p.name)}</span></nav>
 <div class="pdp pad" data-product="${p.id}">
   <div class="pdp-media">
-    <div class="pdp-frame spot walk is-auto" data-video="/${p.video}">
-      <img src="/${p.poster}" alt="${esc(p.name)}: bordeaux half-zip knit and ivory pleated trousers, in motion" width="600" height="800" fetchpriority="high" id="pdp-img">
+    <div class="pdp-frame spot walk is-auto" data-video="${BASE}/${p.video}">
+      <img src="${BASE}/${p.poster}" alt="${esc(p.name)}: bordeaux half-zip knit and ivory pleated trousers, in motion" width="600" height="800" fetchpriority="high" id="pdp-img">
       <video muted playsinline loop preload="none" aria-hidden="true" tabindex="-1"></video>
     </div>
-    ${p.images && p.images.length ? `<div class="thumbs" role="group" aria-label="Images">${[p.poster, ...p.images].map((g, i) => `<button type="button" data-src="/${g}" aria-label="${["The set in motion", ...p.pieces.map(x => x.name)][i] || "Image " + (i + 1)}"${i ? "" : ' aria-current="true"'}><img src="/${g}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}
+    ${p.images && p.images.length ? `<div class="thumbs" role="group" aria-label="Images">${[p.poster, ...p.images].map((g, i) => `<button type="button" data-src="${BASE}/${g}" aria-label="${["The set in motion", ...p.pieces.map(x => x.name)][i] || "Image " + (i + 1)}"${i ? "" : ' aria-current="true"'}><img src="${BASE}/${g}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}
   </div>
   <div class="pdp-info">
     <p class="eyebrow">${esc(SITE.preorder)}</p>
@@ -316,7 +320,7 @@ function product(p) {
       ${p.pieces.map(x => `<details class="acc-item"><summary>${esc(x.name)} · ${esc(x.color)}</summary><div class="acc-body"><p>${esc(x.desc)}</p><ul>${x.details.map(d => `<li>${esc(d)}</li>`).join("")}</ul></div></details>`).join("")}
       ${sizeGuide(p)}
       <details class="acc-item"><summary>Details</summary><div class="acc-body"><ul>${p.details.map(d => `<li>${esc(d)}</li>`).join("")}</ul></div></details>
-      <details class="acc-item"><summary>Shipping &amp; returns</summary><div class="acc-body"><p>Sewn to order; your delivery date is confirmed with your order, before payment. Courier delivery is complimentary across Israel. Purchases can be cancelled under Israel’s Consumer Protection Law. <a href="/shipping">Full details</a></p></div></details>
+      <details class="acc-item"><summary>Shipping &amp; returns</summary><div class="acc-body"><p>Sewn to order; your delivery date is confirmed with your order, before payment. Courier delivery is complimentary across Israel. Purchases can be cancelled under Israel’s Consumer Protection Law. <a href="${BASE}/shipping">Full details</a></p></div></details>
     </div>
     <div class="pdp-foot"><p class="note">${esc(SITE.renderNote)}</p><button class="link" type="button" data-share>Copy link</button></div>
   </div>
@@ -325,7 +329,7 @@ function product(p) {
   <div><b>${esc(p.name)}</b><span class="price">${money(p.price)}</span></div>
   <button class="btn" type="button" id="buybar-btn">Add to bag</button>
 </div>`;
-  return layout({ path: pUrl(p), title: p.seoTitle, desc: p.seoDesc, jsonld: ld, body, page: "product" });
+  return layout({ path: pPath(p), title: p.seoTitle, desc: p.seoDesc, jsonld: ld, body, page: "product" });
 }
 
 function doc(path, title, desc, inner, jsonld = []) {
@@ -336,12 +340,12 @@ function story() {
   const p = PRODUCTS[0];
   return layout({ path: "/story", title: "Story", desc: "The story of La Elegant: elegance as the way you walk into a room, and clothes sewn to order in Israel in small runs.", page: "story", body: `
 <section class="story-hero pad">
-  <img class="story-mark" src="/brand/emblem.webp" alt="" width="720" height="539">
+  <img class="story-mark" src="${BASE}/brand/emblem.webp" alt="" width="720" height="539">
   <p class="eyebrow">Story · ${esc(SITE.est)}</p>
   <h1>Elegance is how you <em>walk</em> into a room.</h1>
 </section>
 <section class="story pad">
-  <div class="story-img spot walk is-auto" data-video="/${p.video}"><img src="/${p.poster}" alt="${esc(p.name)} in motion" width="600" height="800" loading="lazy"><video muted playsinline loop preload="none" aria-hidden="true" tabindex="-1"></video></div>
+  <div class="story-img spot walk is-auto" data-video="${BASE}/${p.video}"><img src="${BASE}/${p.poster}" alt="${esc(p.name)} in motion" width="600" height="800" loading="lazy"><video muted playsinline loop preload="none" aria-hidden="true" tabindex="-1"></video></div>
   <div class="story-text">
     <h2>The walk</h2>
     <p>Elegance isn’t a logo on the chest. It’s the walk, the shoulders, the line — the moment someone sees you before you’ve said a word. That’s why every piece here is shown in motion: good clothes look best when you walk in them.</p>
@@ -406,15 +410,15 @@ function terms() {
 <h2>3. Prices and payment</h2>
 <p>Prices are in Israeli new shekels and include VAT where applicable. Delivery cost, if any, is shown before payment. A secure payment link is sent after the order is confirmed.</p>
 <h2>4. Delivery</h2>
-<p>An estimated delivery date is given with the order confirmation. See the <a href="/shipping">shipping &amp; returns policy</a>.</p>
+<p>An estimated delivery date is given with the order confirmation. See the <a href="${BASE}/shipping">shipping &amp; returns policy</a>.</p>
 <h2>5. Cancellation and returns</h2>
-<p>Cancellations and returns are handled under Israel’s Consumer Protection Law, as set out in the <a href="/shipping">shipping &amp; returns policy</a>.</p>
+<p>Cancellations and returns are handled under Israel’s Consumer Protection Law, as set out in the <a href="${BASE}/shipping">shipping &amp; returns policy</a>.</p>
 <h2>6. Images and descriptions</h2>
 <p>We aim to show every piece accurately, but slight differences in shade and texture between an image on screen and the actual piece may occur.</p>
 <h2>7. Intellectual property</h2>
 <p>All content on the Site, including designs, images, videos, text and the ${esc(SITE.brand)} name and emblem, belongs to us and may not be copied or used without written permission.</p>
 <h2>8. Privacy</h2>
-<p>Use of personal information is described in the <a href="/privacy">privacy policy</a>.</p>
+<p>Use of personal information is described in the <a href="${BASE}/privacy">privacy policy</a>.</p>
 <h2>9. Changes</h2>
 <p>We may update these terms from time to time. An order is governed by the version in force when it was placed.</p>
 <h2>10. Governing law</h2>
@@ -491,7 +495,7 @@ cpSync(join(SRC, "brand"), join(OUT, "brand"), { recursive: true });
 cpSync(join(SRC, "static"), OUT, { recursive: true });
 
 write("assets/config.js", "window.SHOP = " + JSON.stringify({
-  brand: SITE.brand, whatsapp: SITE.whatsapp, checkout: SITE.checkout, shipping: SITE.shipping, leadTime: SITE.leadTime,
+  base: BASE, brand: SITE.brand, whatsapp: SITE.whatsapp, checkout: SITE.checkout, shipping: SITE.shipping, leadTime: SITE.leadTime,
   products: PRODUCTS.map(({ id, slug, name, color, price, poster, sizeGroups }) => ({ id, slug, name, color, price, poster, sizeGroups }))
 }) + ";\n");
 
@@ -505,7 +509,7 @@ write("privacy.html", privacy());
 write("accessibility.html", accessibility());
 write("404.html", notFound());
 
-const urls = ["/", ...PRODUCTS.map(pUrl), "/story", "/faq", "/shipping", "/terms", "/privacy", "/accessibility"];
+const urls = ["/", ...PRODUCTS.map(pPath), "/story", "/faq", "/shipping", "/terms", "/privacy", "/accessibility"];
 write("sitemap.xml", `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${urls.map(u => `  <url><loc>${abs(u)}</loc><lastmod>${TODAY}</lastmod><priority>${u === "/" ? "1.0" : u.startsWith("/products/") ? "0.9" : "0.5"}</priority></url>`).join("\n")}
