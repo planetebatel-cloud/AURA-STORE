@@ -1,109 +1,95 @@
 /* =====================================================================
-   STORE DATA. Everything you edit by hand lives here.
+   STORE SETTINGS — everything you edit by hand lives here and in i18n.mjs.
+   data.mjs  = numbers, contacts, switches (one place for both languages)
+   i18n.mjs  = every word on the site, in English and Hebrew
    After a change: git push → Vercel rebuilds the site.
    ===================================================================== */
 
 export const SITE = {
   brand: "La Elegant",
-  url: "https://aurastorebro.vercel.app",   // change when we connect our own domain
-  wordmarkFont: "Italianno",                    // script for the logo: Ballet / Pinyon Script / Imperial Script / Italianno
+  est: "Est. 2026",
+  founded: "2026",
+
+  // Public address of the site. When the domain is bought, change ONLY this line
+  // (e.g. "https://laelegant.co.il") — canonical links, sitemap, hreflang, llms.txt and
+  // structured data all follow it. Then add the domain in Vercel (see README).
+  url: "https://aurastorebro.vercel.app",
+
+  // Languages: the first one lives at "/", the others at "/<code>/".
+  langs: ["en", "he"],
 
   // Contacts. An empty field is simply not shown.
-  whatsapp: "",        // number without +, e.g. "972501234567". Empty = checkout runs in preview mode
+  // whatsapp: number without +, e.g. "972501234567". Orders are sent to this number.
+  whatsapp: "",
   email: "",
   instagram: "",       // handle without @
   tiktok: "",          // handle without @
 
-  // Business details — fill in after registration (needed for legal pages and payments)
+  // Business details — fill in after registration (shown on the legal pages only when filled)
   business: {
     name: "",                 // registered business name
-    id: "",                   // business number (ע.מ. / ח.פ.)
+    id: "",                   // business number (ע.מ.)
     address: "",
     accessibilityContact: ""  // who handles accessibility requests
   },
 
-  tagline: "Elegance is how you walk into a room.",
-  description: "La Elegant is an Israeli fashion label. A first collection of clean, considered pieces, made to order in small runs in Israel.",
-  renderNote: "Images are renders of the design. The final fabric shade may vary slightly.",
-  preorder: "Pre-order · Made to order in Israel",
-
   checkout: {
-    mode: "whatsapp",  // orders go to WhatsApp for now; switches once payments are connected
-    endpoint: "",      // optional: Google Apps Script URL to log every order into a sheet
-    note: "This is a pre-order. Once you send it, we'll reply on WhatsApp with confirmation, delivery time and payment details. Nothing is charged before you confirm."
+    // "whatsapp" = the order is sent to our WhatsApp and we reply with a secure payment link.
+    // When a payment provider is connected, add its mode here and branch on it in assets/store.js (placeOrder).
+    mode: "whatsapp",
+    endpoint: ""       // optional: a URL that receives every order as JSON (e.g. Google Apps Script → Sheet)
   },
 
-  // Delivery options. price: null = "confirmed with your order"
+  // Delivery options. price: 0 = free, null = "confirmed with your order". Labels are in i18n.mjs (shipping.<id>).
   shipping: [
-    { id: "courier", label: "Courier to your door", price: null, note: "Delivery cost is confirmed with your order" }
-    // { id: "pickup", label: "Pickup", price: 0, note: "Address sent on WhatsApp" },
+    { id: "courier", price: 0 }
   ],
+  // Delivery time used in Google's structured data. handling + transit should add up to the text in i18n (leadTime).
+  delivery: { handlingDays: [7, 10], transitDays: [3, 4] },
+  returnDays: 14,
 
-  sizes: ["S", "M", "L", "XL"],
+  // ---------- Accounts & bonus coins (Supabase) ----------
+  // Leave url/anonKey empty and the site works exactly as before: guest checkout only, no account link.
+  // Fill them (Supabase → Project Settings → API) to turn on accounts. See README → "Accounts".
+  // The anon key is public by design; never put the service_role key here.
+  accounts: {
+    supabaseUrl: "",
+    supabaseAnonKey: "",
+    google: true,       // "Continue with Google" (needs Google set up in Supabase → Auth → Providers)
+    email: true         // sign-in link / code by email (needs custom SMTP in Supabase → Auth → SMTP)
+  },
+  // Bonus coins: 1 coin = ₪1. rate = share of the amount paid that comes back as coins once an order is paid.
+  // The real number is enforced in the database (table shop_settings) — keep both the same.
+  bonus: { rate: 0.05 },
 
-  // Size guide: [size, chest cm, length cm]. Empty = hidden.
-  // Example: [["S", 104, 68], ["M", 110, 70], ["L", 116, 72], ["XL", 122, 74]]
-  sizeGuide: [],
+  // ---------- Search engines ----------
+  seo: {
+    googleVerification: "",   // Google Search Console → HTML tag → the content="..." value
+    bingVerification: "",     // Bing Webmaster Tools → HTML meta tag → content value (Bing also feeds ChatGPT search)
+    indexNowKey: ""           // any 32-char hex string; the build publishes /<key>.txt for IndexNow (Bing, Yandex)
+  },
 
-  hero: "hoodie",  // the piece in the spotlight when there is no campaign film
-
-  // Campaign film in the home-page spotlight (a looping walk). Remove to use the hero piece instead.
-  heroFilm: { poster: "media/film-01.webp", video: "media/film-01.mp4", alt: "A model walking toward the camera" }
+  // The piece in the spotlight on the home page
+  hero: "set01",
+  heroFilm: { poster: "media/film-01.webp", video: "media/film-01.mp4" }
 };
 
-/* Products. slug = the product page address. images = extra photos (optional). */
+/* Products. slug = the product page address (same in every language). Words live in i18n.mjs → products.<id>. */
 export const PRODUCTS = [
   {
-    id: "hoodie", slug: "oversized-heavy-hoodie-black",
-    name: "Heavy Oversized Hoodie", color: "Black", price: 249,
-    poster: "media/hoodie.webp", video: "media/hoodie.mp4", images: [],
-    seoTitle: "Heavy Oversized Hoodie in Black",
-    seoDesc: "A heavy cotton oversized hoodie in black with dropped shoulders and a kangaroo pocket. Made to order in Israel in small runs.",
-    desc: "An oversized hoodie in heavy cotton. Dropped shoulders, a kangaroo pocket and a white drawcord. Simple, weighty and clean.",
-    details: ["Oversized fit, dropped shoulders", "Heavyweight cotton", "Kangaroo pocket", "Made in Israel"]
-  },
-  {
-    id: "tee", slug: "boxy-tee-white",
-    name: "Boxy Tee", color: "White", price: 129,
-    poster: "media/tee.webp", video: "media/tee.mp4", images: [],
-    seoTitle: "Boxy Tee in White, Heavy Cotton",
-    seoDesc: "A white boxy t-shirt in heavy cotton with a tight crew neck and wide short sleeves. Made to order in Israel.",
-    desc: "A wide, cropped tee with a tight crew neck and sleeves that sit wide on the arm. The basic every wardrobe needs, made properly.",
-    details: ["Boxy fit", "Tight crew neck", "Heavy cotton", "Made in Israel"]
-  },
-  {
-    id: "pants", slug: "wide-leg-trousers-olive",
-    name: "Wide-Leg Trousers", color: "Olive", price: 289,
-    poster: "media/pants.webp", video: "media/pants.mp4", images: [],
-    seoTitle: "Wide-Leg Trousers in Olive",
-    seoDesc: "High-waisted wide-leg trousers in olive that break over the shoe. Made to order in Israel in small runs.",
-    desc: "High-waisted trousers with a wide leg that falls straight over the shoe. They move with you and keep a clean line.",
-    details: ["Wide leg", "High waist", "Full length, breaks over the shoe", "Made in Israel"]
-  },
-  {
-    id: "bomber", slug: "cropped-bomber-pink",
-    name: "Cropped Bomber", color: "Pink", price: 389,
-    poster: "media/bomber.webp", video: "media/bomber.mp4", images: [],
-    seoTitle: "Cropped Bomber Jacket in Pink",
-    seoDesc: "A cropped bomber jacket in bright pink with dropped shoulders, a full zip and ribbed hem. Made to order in Israel.",
-    desc: "A cropped bomber in a loud pink, with dropped shoulders, a full zip and ribbing at the hem and cuffs. The piece that walks in before you do.",
-    details: ["Cropped fit", "Full zip", "Ribbed hem and cuffs", "Made in Israel"]
+    id: "set01", slug: "the-bordeaux-set", price: 990,
+    gender: "male", category: "Apparel & Accessories > Clothing",
+    poster: "media/film-01.webp", video: "media/film-01.mp4",
+    images: ["media/detail-knit.webp", "media/detail-trouser.webp"],
+    pieceImages: ["media/detail-knit.webp", "media/detail-trouser.webp"],
+    sizeGroups: [
+      { key: "top", sizes: ["XS", "S", "M", "L", "XL", "XXL"] },
+      { key: "waist", sizes: ["28", "30", "32", "34", "36", "38"] }
+    ],
+    // Size guide by BODY measurements (cm). Update once the factory's finished-garment measurements are final.
+    sizeGuide: {
+      top: [["XS", "84–88", "44"], ["S", "88–94", "46"], ["M", "94–100", "48"], ["L", "100–106", "50"], ["XL", "106–112", "52"], ["XXL", "112–118", "54"]],
+      waist: [["28", "70–73", "44"], ["30", "75–78", "46"], ["32", "80–83", "48"], ["34", "85–88", "50"], ["36", "90–93", "52"], ["38", "95–98", "54"]]
+    }
   }
-];
-
-export const FAQ = [
-  ["What does pre-order mean?",
-   "We don't produce stock in advance. Every piece goes into production at a factory in Israel after it's ordered, so every order on the site is a pre-order. After you send yours, we'll reply with confirmation, delivery time and payment details."],
-  ["When do I pay?",
-   "Nothing is charged when you send the order. Once we confirm it and the delivery time, we send you the payment details."],
-  ["How long does delivery take?",
-   "Production and delivery time depend on how many orders each piece has. You'll get the exact delivery time with your confirmation, before you pay."],
-  ["How do I pick a size?",
-   "The cuts are generous on purpose. Between two sizes, take the smaller one for a cleaner line or the larger one for an oversized look. Not sure? Message us on WhatsApp."],
-  ["Can I return or exchange?",
-   "Yes. You can cancel a purchase under Israel's Consumer Protection Law. All the details are on the shipping and returns page."],
-  ["Where are the clothes made?",
-   "At a factory in Israel, in small runs. That's how we keep control of the quality and avoid making clothes nobody wears."],
-  ["Why do the images look like renders?",
-   "Because they are renders of the design. The collection is made to order, so some images are shown before production. The final fabric shade may vary slightly."]
 ];

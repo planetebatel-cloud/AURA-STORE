@@ -1,36 +1,27 @@
 {
   "framework": null,
-  "buildCommand": "node src/build.mjs && SITE_BASE=/la-elegant SITE_OUT=public/la-elegant SITE_URL=https://aurastorebro.vercel.app/la-elegant node la-elegant/src/build.mjs",
+  "buildCommand": "node src/build.mjs",
   "outputDirectory": "public",
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    { "source": "/la-elegant", "destination": "/", "permanent": true },
+    { "source": "/la-elegant/:path*", "destination": "/:path*", "permanent": true },
+    { "source": "/products/oversized-heavy-hoodie-black", "destination": "/", "permanent": true },
+    { "source": "/products/boxy-tee-white", "destination": "/", "permanent": true },
+    { "source": "/products/wide-leg-trousers-olive", "destination": "/", "permanent": true },
+    { "source": "/products/cropped-bomber-pink", "destination": "/", "permanent": true }
+  ],
   "headers": [
-    {
-      "source": "/media/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=604800"
-        }
-      ]
-    },
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=600"
-        }
-      ]
-    },
-    {
-      "source": "/la-elegant/(media|brand)/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=604800"
-        }
-      ]
-    }
+    { "source": "/(.*)", "headers": [
+      { "key": "X-Content-Type-Options", "value": "nosniff" },
+      { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+      { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+    ] },
+    { "source": "/media/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] },
+    { "source": "/brand/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=604800" }] },
+    { "source": "/assets/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=600" }] },
+    { "source": "/account", "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }] },
+    { "source": "/he/account", "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }] }
   ]
 }
