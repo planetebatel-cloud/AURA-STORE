@@ -251,6 +251,9 @@ legend { padding: 0; }
 .doc ul { padding-inline-start: 22px; margin: 0 0 10px; }
 .doc li { margin-bottom: 6px; }
 .doc .acc { margin-block: 20px 26px; }
+.cancel-form { margin-block: 22px 26px; max-width: 560px; }
+.cancel-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.cancel-form .err { color: #E7A08C; margin: 0; }
 .nf { text-align: center; justify-items: center; gap: 16px; }
 
 /* ---------- drawer, bag, checkout ---------- */
@@ -344,6 +347,11 @@ legend { padding: 0; }
   .credits { position: static; justify-items: start; text-align: start; padding-inline: var(--gl) var(--gr); }
 }
 @media (max-width: 720px) {
+  /* phone: the figure, the line, the price and the button all fit on the first screen */
+  .stage { gap: 16px; padding-block: 72px 32px; }
+  .stage-spot { width: auto; height: min(50svh, 460px); }
+  .stage-line { max-width: none; font-size: clamp(1.9rem, 7.6vw, 2.6rem); }
+  .credits { gap: 4px; }
   .menu-btn { display: inline-block; }
   .nav { display: none; position: absolute; top: 100%; inset-inline: 0; flex-direction: column; gap: 0; background: var(--bg-2); border-bottom: 1px solid var(--line); padding: 8px var(--gr) 16px var(--gl); }
   .nav.open { display: flex; }

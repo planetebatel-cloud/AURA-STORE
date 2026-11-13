@@ -9,6 +9,8 @@ export const SITE = {
   brand: "La Elegant",
   est: "Est. 2026",
   founded: "2026",
+  // Other spellings people (and search engines / AI assistants) may use for the brand
+  altNames: ["לה אלגנט", "LA ELEGANT", "La Elegant Israel"],
 
   // Public address of the site. When the domain is bought, change ONLY this line
   // (e.g. "https://laelegant.co.il") — canonical links, sitemap, hreflang, llms.txt and

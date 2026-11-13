@@ -33,7 +33,7 @@ const ld = j => `<script type="application/ld+json">${JSON.stringify(j).replace(
 const sameAs = [SITE.instagram && `https://instagram.com/${SITE.instagram}`, SITE.tiktok && `https://www.tiktok.com/@${SITE.tiktok}`].filter(Boolean);
 
 /* Every page that exists in every language (path without the language prefix). */
-const PAGES = ["/", ...PRODUCTS.map(pPath), "/story", "/faq", "/shipping", "/terms", "/privacy", "/accessibility"];
+const PAGES = ["/", ...PRODUCTS.map(pPath), "/story", "/faq", "/shipping", "/terms", "/privacy", "/accessibility", "/cancel"];
 
 function buildLang(lang) {
   const t = T[lang], ph = PHRASES[lang], L = prefix(lang);
@@ -99,6 +99,7 @@ function buildLang(lang) {
       <li><a href="${L}/terms">${esc(t.foot.terms)}</a></li>
       <li><a href="${L}/privacy">${esc(t.foot.privacy)}</a></li>
       <li><a href="${L}/accessibility">${esc(t.foot.accessibility)}</a></li>
+      <li><a href="${L}/cancel">${esc(t.foot.cancel)}</a></li>
     </ul></nav>
     ${social ? `<div><h2>${esc(t.foot.contact)}</h2><ul>${social}</ul></div>` : ""}
   </div>
@@ -177,7 +178,9 @@ function buildLang(lang) {
 
   /* ---------- structured data shared by pages ---------- */
   const orgLd = {
-    "@context": "https://schema.org", "@type": "Organization", "@id": abs("/#org"), name: SITE.brand, url: abs(loc(lang, "/")),
+    "@context": "https://schema.org", "@type": "Organization", "@id": abs("/#org"), name: SITE.brand, alternateName: SITE.altNames, url: abs(loc(lang, "/")),
+    ...(B.name ? { legalName: B.name } : {}), ...(B.id ? { taxID: B.id } : {}),
+    ...(B.address ? { address: { "@type": "PostalAddress", streetAddress: B.address, addressCountry: "IL" } } : {}),
     logo: abs("/apple-touch-icon.png"), image: abs("/og.jpg"), description: t.site.description,
     slogan: t.site.tagline, foundingDate: SITE.founded, foundingLocation: { "@type": "Place", name: "Israel" },
     areaServed: { "@type": "Country", name: "Israel" },
@@ -329,12 +332,17 @@ ${bagDrawer}
   function product(raw) {
     const p = full(raw);
     const d = SITE.delivery;
+    // Fabric composition / care / model note: shown (and sent to Google as "material") only once filled in i18n.mjs
+    const comp = p.pieces.map(x => x.composition ? `${x.name}: ${x.composition}` : "").filter(Boolean);
+    const material = p.pieces.map(x => x.composition).filter(Boolean).join("; ");
+    const fabric = (comp.length || p.care || p.modelNote) ? `<details class="acc-item"><summary>${esc(t.pdp.accFabric)}</summary><div class="acc-body"><ul>${[...comp, p.care, p.modelNote].filter(Boolean).map(x => `<li>${esc(x)}</li>`).join("")}</ul></div></details>` : "";
     const ask = SITE.whatsapp ? `<a class="ask" href="${esc(wa(`${t.pdp.askMsg} ${p.name}`))}" target="_blank" rel="noopener">${esc(t.pdp.ask)}</a>` : "";
     const productLd = {
       "@context": "https://schema.org", "@type": "Product", "@id": abs(pPath(p)) + "#product",
       name: p.name, description: p.seoDesc, sku: p.id, color: p.color, category: p.category,
       image: [p.poster, ...(p.images || [])].map(g => abs("/" + g)),
       brand: { "@type": "Brand", name: SITE.brand },
+      ...(material ? { material } : {}),
       audience: { "@type": "PeopleAudience", suggestedGender: p.gender },
       countryOfOrigin: { "@type": "Country", name: "Israel" },
       offers: {
@@ -354,7 +362,8 @@ ${bagDrawer}
         hasMerchantReturnPolicy: {
           "@type": "MerchantReturnPolicy", applicableCountry: "IL",
           returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow", merchantReturnDays: SITE.returnDays,
-          returnMethod: "https://schema.org/ReturnByMail"
+          returnMethod: "https://schema.org/ReturnByMail", returnFees: "https://schema.org/ReturnFeesCustomerResponsibility",
+          merchantReturnLink: abs(loc(lang, "/shipping"))
         }
       }
     };
@@ -395,6 +404,7 @@ ${bagDrawer}
       <details class="acc-item" open><summary>${esc(t.pdp.accSet)}</summary><div class="acc-body"><p>${esc(p.lede)}</p></div></details>
       ${p.pieces.map(x => `<details class="acc-item"><summary>${esc(x.name)} · ${esc(x.color)}</summary><div class="acc-body"><p>${esc(x.desc)}</p><ul>${x.details.map(dd => `<li>${esc(dd)}</li>`).join("")}</ul></div></details>`).join("")}
       ${sizeGuide(p)}
+      ${fabric}
       <details class="acc-item"><summary>${esc(t.pdp.accDetails)}</summary><div class="acc-body"><ul>${p.details.map(dd => `<li>${esc(dd)}</li>`).join("")}</ul></div></details>
       <details class="acc-item"><summary>${esc(t.pdp.accShip)}</summary><div class="acc-body"><p>${esc(t.pdp.shipText)} <a href="${L}/shipping">${esc(t.pdp.fullDetails)}</a></p></div></details>
     </div>
@@ -405,11 +415,11 @@ ${bagDrawer}
   <div><b>${esc(p.name)}</b>${priceHtml(p.price)}</div>
   <button class="btn" type="button" id="buybar-btn">${esc(t.pdp.addShort)}</button>
 </div>`;
-    return layout({ path: pPath(p), title: p.seoTitle, desc: p.seoDesc, jsonld: [productLd, crumbLd], body, page: "product" });
+    return layout({ path: pPath(p), title: p.seoTitle, desc: p.seoDesc, jsonld: [productLd, crumbLd, orgLd], body, page: "product" });
   }
 
-  function doc(path, title, desc, inner, jsonld = []) {
-    return layout({ path, title, desc, jsonld, page: "doc", body: `<article class="doc pad">${inner}</article>` });
+  function doc(path, title, desc, inner, jsonld = [], scripts = "") {
+    return layout({ path, title, desc, jsonld, scripts, page: "doc", body: `<article class="doc pad">${inner}</article>` });
   }
 
   function story() {
@@ -458,6 +468,34 @@ ${bagDrawer}
   };
   const legalPage = key => doc("/" + key, t.legal[key].title, t.legal[key].desc, LEGAL[lang][key](legalCtx));
 
+  /* Cancellation request page (Consumer Protection Law: a dedicated, visible way to cancel an online purchase) */
+  function cancel() {
+    const c = t.cancel;
+    const field = (id, label, type = "text", req = true, extra = "") => `<div class="field"><label for="x-${id}">${esc(label)}${req ? "" : ` <small>${esc(c.optional)}</small>`}</label><input id="x-${id}" name="${id}" type="${type}"${req ? " required" : ""} ${extra}></div>`;
+    const channels = [
+      SITE.whatsapp ? `<button class="btn" type="submit" data-via="wa">${esc(c.sendWa)}</button>` : "",
+      SITE.email ? `<button class="btn${SITE.whatsapp ? " ghost" : ""}" type="submit" data-via="mail">${esc(c.sendMail)}</button>` : "",
+      `<button class="btn ghost" type="submit" data-via="copy">${esc(c.copy)}</button>`
+    ].join("\n      ");
+    const cfg = { wa: SITE.whatsapp, mail: SITE.email, subject: c.subject, head: c.msgHead, labels: c.labels, copied: c.copied, missing: c.missing };
+    return doc("/cancel", c.title, c.desc, `
+<p class="eyebrow">${esc(c.eyebrow)}</p>
+<h1>${esc(c.h1)}</h1>
+<p>${esc(fill(c.intro, { days: SITE.returnDays }))} <a href="${L}/shipping">${esc(c.policy)}</a></p>
+<form class="form cancel-form" id="cancel-form" novalidate>
+  ${field("name", c.labels.name, "text", true, 'autocomplete="name"')}
+  <div class="two">${field("phone", c.labels.phone, "tel", true, 'autocomplete="tel" inputmode="tel" dir="ltr"')}${field("order", c.labels.order, "text", false, 'dir="ltr" placeholder="LE-"')}</div>
+  ${field("email", c.labels.email, "email", false, 'autocomplete="email" dir="ltr"')}
+  <div class="field"><label for="x-reason">${esc(c.labels.reason)} <small>${esc(c.optional)}</small></label><textarea id="x-reason" name="reason" rows="2"></textarea></div>
+  <p class="err" id="cancel-err" role="alert" hidden></p>
+  <div class="cancel-actions">
+      ${channels}
+  </div>
+  <p class="note" id="cancel-done" role="status" aria-live="polite">${(SITE.whatsapp || SITE.email) ? esc(c.after) : esc(c.afterCopy)}</p>
+</form>
+<p>${contactSentence}</p>`, [], `<script>window.CANCEL = ${JSON.stringify(cfg).replace(/</g, "\\u003c")};</script>\n<script defer src="/assets/cancel.js"></script>`);
+  }
+
   function account() {
     const a = t.account;
     const body = `
@@ -481,7 +519,7 @@ ${bagDrawer}
     bonusRate: SITE.bonus.rate
   };
 
-  return { home, product, story, faq, legalPage, account, config, full, faqItems };
+  return { home, product, story, faq, legalPage, cancel, account, config, full, faqItems };
 }
 
 /* ---------- write ---------- */
@@ -509,6 +547,7 @@ for (const lang of LANGS) {
   write(dir + "story.html", b.story());
   write(dir + "faq.html", b.faq());
   ["shipping", "terms", "privacy", "accessibility"].forEach(k => write(`${dir}${k}.html`, b.legalPage(k)));
+  write(dir + "cancel.html", b.cancel());
   write(dir + "account.html", b.account());
 }
 
@@ -578,6 +617,7 @@ ${he ? `- [${he.name} — Hebrew](${abs(loc("he", pPath(p)))}): ${he.seoDesc}\n`
 ${he ? `- [עברית — דף הבית](${abs(loc("he", "/"))}): ${T.he.site.description}\n` : ""}
 ## Policies
 - [Shipping & returns](${abs("/shipping")}): free courier across Israel, ${en.site.leadTime.toLowerCase()}, cancellation under Israel’s Consumer Protection Law
+- [Cancel a purchase](${abs("/cancel")}): cancellation request form
 - [Terms](${abs("/terms")})
 - [Privacy](${abs("/privacy")})
 
@@ -589,5 +629,23 @@ ${qa}
 
 /* IndexNow key file (Bing, Yandex, and the search engines that share their index) */
 if (SITE.seo.indexNowKey) write(`${SITE.seo.indexNowKey}.txt`, SITE.seo.indexNowKey);
+
+/* Launch check — what is still empty in data.mjs / i18n.mjs. Nothing here stops the build. */
+{
+  const B = SITE.business, p0 = built[DEF].full(PRODUCTS[0]);
+  const todo = [
+    !SITE.whatsapp && !SITE.checkout.endpoint && !ACC && "ORDERS GO NOWHERE: fill whatsapp (or checkout.endpoint) in data.mjs — right now a customer's order is not sent to anyone",
+    !SITE.whatsapp && !SITE.email && "no contact on the site: fill whatsapp and/or email (required by the Consumer Protection Law)",
+    (!B.name || !B.id || !B.address) && "business details missing: business.name / id / address",
+    !B.accessibilityContact && "accessibility contact missing: business.accessibilityContact",
+    p0.pieces.some(x => !x.composition) && "fabric composition missing: products.set01.pieces[].composition in i18n.mjs (must be on the page for online clothing sales)",
+    !p0.care && "care instructions missing: products.set01.care in i18n.mjs",
+    /vercel\.app/.test(SITE.url) && "site.url is still the vercel.app address — change it when the domain is connected",
+    !SITE.seo.googleVerification && "Google Search Console code missing: seo.googleVerification",
+    !SITE.seo.bingVerification && "Bing Webmaster code missing: seo.bingVerification",
+    !SITE.instagram && "instagram handle missing (also used for sameAs in structured data)"
+  ].filter(Boolean);
+  if (todo.length) console.log("\nLAUNCH CHECK — still to fill:\n" + todo.map(x => "  • " + x).join("\n") + "\n");
+}
 
 console.log(`built ${LANGS.length} languages × ${PAGES.length} pages (+ account, 404) → ${OUT}${ACC ? " · accounts ON" : " · accounts off (no Supabase keys)"}`);

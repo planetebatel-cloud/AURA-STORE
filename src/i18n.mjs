@@ -14,7 +14,7 @@ export const T = {
       title: "Collection 01",
       homeTitle: "Israeli menswear, sewn to order",
       description: "La Elegant — Israeli menswear, sewn to order. Collection 01: The Bordeaux Set, a half-zip knit with pleated ivory trousers. ₪990, complimentary delivery across Israel.",
-      renderNote: "Imagery shows the design in motion. The final fabric shade may vary slightly.",
+      renderNote: "Design visualisation, not a photograph of the finished garment. Each set is sewn to order; the final fabric shade may vary slightly.",
       preorder: "Collection 01 · Sewn to order in Israel",
       leadTime: "Estimated delivery 10–14 days",
       paymentNote: "Nothing is charged now. We confirm your sizes and delivery date, then send a secure payment link.",
@@ -22,7 +22,7 @@ export const T = {
       sewn: "Sewn to order in Israel"
     },
     nav: { set: "The Set", story: "Story", faq: "FAQ", account: "Account", menu: "Menu", close: "Close", bag: "Bag", skip: "Skip to content", home: "home", main: "Main" },
-    foot: { collection: "Collection 01", how: "How ordering works", info: "Information", shipping: "Shipping & returns", terms: "Terms", privacy: "Privacy", accessibility: "Accessibility", contact: "Contact", shop: "Shop", businessNo: "Business no." },
+    foot: { collection: "Collection 01", how: "How ordering works", info: "Information", shipping: "Shipping & returns", terms: "Terms", privacy: "Privacy", accessibility: "Accessibility", cancel: "Cancel a purchase", contact: "Contact", shop: "Shop", businessNo: "Business no." },
     shipping: { courier: { label: "Courier to your door", note: "Complimentary across Israel" } },
     home: {
       lead: "Collection 01", shopSet: "Shop the set", firstDrop: "Collection 01 · The first drop", theSet: "the set",
@@ -41,7 +41,7 @@ export const T = {
       twoPieces: "two pieces", add: "Add the set to bag", addShort: "Add to bag",
       assure: ["Complimentary courier delivery in Israel", "Nothing is charged until we confirm your order"],
       ask: "Questions about sizing? Message us on WhatsApp", askMsg: "Hi, I have a question about",
-      accSet: "The set", accDetails: "Details", accShip: "Shipping & returns",
+      accSet: "The set", accFabric: "Fabric & care", accDetails: "Details", accShip: "Shipping & returns",
       shipText: "Sewn to order; your delivery date is confirmed with your order, before payment. Courier delivery is complimentary across Israel. Purchases can be cancelled under Israel’s Consumer Protection Law.",
       fullDetails: "Full details", copyLink: "Copy link", images: "Images", inMotion: "The set in motion", image: "Image",
       sizeGuide: "Size guide", guideNote: "Body measurements. Between two sizes, take the smaller for a cleaner line or the larger for an easier fit.",
@@ -50,18 +50,23 @@ export const T = {
     products: {
       set01: {
         name: "The Bordeaux Set", color: "Bordeaux / Ivory",
-        seoTitle: "The Bordeaux Set — Men’s Half-Zip Knit & Pleated Trousers",
+        seoTitle: "The Bordeaux Set — Men’s Half-Zip Knit & Trousers",
         seoDesc: "Collection 01 by La Elegant: a men’s bordeaux half-zip knit with pleated ivory trousers. Sewn to order in Israel. ₪990 for the set, complimentary delivery.",
         imgAlt: "The Bordeaux Set: bordeaux half-zip knit and ivory pleated trousers, in motion",
         lede: "Two pieces, one line. A bordeaux half-zip knit worn over pleated ivory trousers — the quiet uniform of people who never need to explain themselves.",
         pieces: [
           { name: "The Half-Zip", color: "Bordeaux",
             desc: "A fine-gauge knit with a stand collar and a short zip at the neck. Ribbed cuffs and hem hold the line at the wrist and waist.",
+            composition: "",   // e.g. "80% cotton, 20% polyamide"
             details: ["Stand collar, half zip", "Ribbed cuffs and hem", "Regular, close fit"] },
           { name: "The Pleated Trouser", color: "Ivory",
             desc: "High-rise trousers with front pleats and a pressed crease, falling straight to the shoe. Clean at the waist, generous through the leg.",
+            composition: "",   // e.g. "65% polyester, 32% viscose, 3% elastane"
             details: ["Front pleats, pressed crease", "High rise, straight leg", "Full length"] }
         ],
+        // Fill these once the factory confirms — each appears on the page (and in Google's data) only when filled:
+        care: "",        // e.g. "Machine wash cold, do not tumble dry, cool iron"
+        modelNote: "",   // e.g. "Model is 185 cm and wears M / 32"
         details: ["Men’s set, two pieces sold together", "Sewn to order in small runs in Israel", "Each set is checked by hand before delivery"],
         sizeGroups: {
           top: { label: "Knit size", short: "Knit", err: "Choose your knit size" },
@@ -166,6 +171,18 @@ export const T = {
       guestEarn: "Create an account{withEmail} to get {n} in bonus coins for this order.", withEmail: " with {email}", createAccount: "Create an account",
       msg: { hi: "Hi! A new order from", no: "Order no", sub: "Subtotal", del: "Delivery", bonus: "Bonus coins used", total: "Total", name: "Name", phone: "Phone", email: "Email", addr: "Address", notes: "Notes", size: "×" }
     },
+    cancel: {
+      title: "Cancel a purchase", desc: "Cancel a La Elegant purchase online: a short form that sends us your cancellation notice under Israel’s Consumer Protection Law.",
+      eyebrow: "Consumer Protection Law", h1: "Cancel a purchase",
+      intro: "You can cancel within {days} days of receiving your set or the order details, whichever is later. Fill in the form and send it — that is your written cancellation notice.",
+      policy: "Full cancellation and returns policy",
+      optional: "optional", labels: { name: "Full name", phone: "Phone", order: "Order number", email: "Email", reason: "Reason" },
+      sendWa: "Send by WhatsApp", sendMail: "Send by email", copy: "Copy the notice",
+      subject: "Cancellation notice", msgHead: "Cancellation notice — La Elegant. I wish to cancel my purchase.",
+      after: "The notice opens in WhatsApp or your mail app — press send there. We confirm every cancellation in writing and refund within 14 days.",
+      afterCopy: "Copy the notice and send it to us through any of the contact options on this site.",
+      copied: "Copied. Send it to us and we will confirm in writing.", missing: "Please enter your name and phone number."
+    },
     legal: {
       updated: "Last updated",
       shipping: {
@@ -186,7 +203,7 @@ export const T = {
       title: "קולקציה 01",
       homeTitle: "אופנת גברים ישראלית, תפורה לפי הזמנה",
       description: "La Elegant — אופנת גברים ישראלית, תפורה לפי הזמנה. קולקציה 01: The Bordeaux Set, סריג חצי רוכסן ומכנסיים עם קפלים בצבע שנהב. ‎₪990, משלוח חינם לכל הארץ.",
-      renderNote: "התמונות מציגות את העיצוב בתנועה. גוון הבד בפועל עשוי להיות שונה מעט.",
+      renderNote: "הדמיה של העיצוב, לא צילום של הבגד המוגמר. כל סט נתפר לפי הזמנה; גוון הבד בפועל עשוי להיות שונה מעט.",
       preorder: "קולקציה 01 · נתפר לפי הזמנה בישראל",
       leadTime: "זמן אספקה משוער 10–14 ימים",
       paymentNote: "שום דבר לא מחויב עכשיו. נאשר איתך את המידות ואת מועד האספקה ואז נשלח קישור מאובטח לתשלום.",
@@ -194,7 +211,7 @@ export const T = {
       sewn: "נתפר לפי הזמנה בישראל"
     },
     nav: { set: "הסט", story: "הסיפור", faq: "שאלות נפוצות", account: "החשבון שלי", menu: "תפריט", close: "סגירה", bag: "סל", skip: "דילוג לתוכן", home: "דף הבית", main: "ראשי" },
-    foot: { collection: "קולקציה 01", how: "איך מזמינים", info: "מידע", shipping: "משלוחים והחזרות", terms: "תקנון", privacy: "פרטיות", accessibility: "נגישות", contact: "יצירת קשר", shop: "חנות", businessNo: "ע.מ." },
+    foot: { collection: "קולקציה 01", how: "איך מזמינים", info: "מידע", shipping: "משלוחים והחזרות", terms: "תקנון", privacy: "פרטיות", accessibility: "נגישות", cancel: "ביטול עסקה", contact: "יצירת קשר", shop: "חנות", businessNo: "ע.מ." },
     shipping: { courier: { label: "שליח עד הבית", note: "חינם לכל הארץ" } },
     home: {
       lead: "קולקציה 01", shopSet: "לסט", firstDrop: "קולקציה 01 · הדרופ הראשון", theSet: "לסט",
@@ -213,7 +230,7 @@ export const T = {
       twoPieces: "שני פריטים", add: "הוספת הסט לסל", addShort: "הוספה לסל",
       assure: ["משלוח חינם עם שליח לכל הארץ", "שום דבר לא מחויב עד שנאשר את ההזמנה"],
       ask: "שאלות על מידות? כתבו לנו בוואטסאפ", askMsg: "היי, יש לי שאלה על",
-      accSet: "הסט", accDetails: "פרטים", accShip: "משלוחים והחזרות",
+      accSet: "הסט", accFabric: "הרכב הבד וטיפול", accDetails: "פרטים", accShip: "משלוחים והחזרות",
       shipText: "נתפר לפי הזמנה; מועד האספקה מאושר יחד עם ההזמנה, לפני התשלום. משלוח עם שליח חינם לכל הארץ. ניתן לבטל עסקה לפי חוק הגנת הצרכן.",
       fullDetails: "כל הפרטים", copyLink: "העתקת קישור", images: "תמונות", inMotion: "הסט בתנועה", image: "תמונה",
       sizeGuide: "מדריך מידות", guideNote: "מידות גוף. בין שתי מידות: הקטנה לקו נקי יותר, הגדולה לגזרה נוחה יותר.",
@@ -222,18 +239,22 @@ export const T = {
     products: {
       set01: {
         name: "The Bordeaux Set", color: "בורדו / שנהב",
-        seoTitle: "The Bordeaux Set — סט לגבר: סריג חצי רוכסן ומכנסיים עם קפלים",
+        seoTitle: "The Bordeaux Set — סט סריג ומכנסיים לגבר",
         seoDesc: "קולקציה 01 של La Elegant: סריג בורדו לגבר עם חצי רוכסן ומכנסיים בצבע שנהב עם קפלים. נתפר לפי הזמנה בישראל. ‎₪990 לסט, משלוח חינם.",
         imgAlt: "The Bordeaux Set: סריג בורדו עם חצי רוכסן ומכנסיים בצבע שנהב עם קפלים, בתנועה",
         lede: "שני פריטים, קו אחד. סריג בורדו עם חצי רוכסן מעל מכנסיים בצבע שנהב עם קפלים — המדים השקטים של מי שלא צריך להסביר את עצמו.",
         pieces: [
           { name: "The Half-Zip", color: "בורדו",
             desc: "סריג דק עם צווארון עומד ורוכסן קצר בצוואר. גומי מצולע בשרוולים ובשוליים שומר על הקו בפרק כף היד ובמותן.",
+            composition: "",   // למשל "80% כותנה, 20% פוליאמיד"
             details: ["צווארון עומד, חצי רוכסן", "גומי מצולע בשרוולים ובשוליים", "גזרה רגילה, קרובה לגוף"] },
           { name: "The Pleated Trouser", color: "שנהב",
             desc: "מכנסיים בגזרה גבוהה עם קפלים קדמיים וקו גיהוץ, שנופלים ישר עד הנעל. נקיים במותן, נדיבים לאורך הרגל.",
+            composition: "",   // למשל "65% פוליאסטר, 32% ויסקוזה, 3% אלסטן"
             details: ["קפלים קדמיים, קו גיהוץ", "מותן גבוה, רגל ישרה", "אורך מלא"] }
         ],
+        care: "",        // למשל "כביסה עדינה במים קרים, ללא מייבש, גיהוץ בחום נמוך"
+        modelNote: "",   // למשל "גובה הדוגמן 185 ס״מ, לובש M / 32"
         details: ["סט לגבר, שני פריטים שנמכרים יחד", "נתפר לפי הזמנה בסדרות קטנות בישראל", "כל סט נבדק ידנית לפני המשלוח"],
         sizeGroups: {
           top: { label: "מידת סריג", short: "סריג", err: "בחרו מידת סריג" },
@@ -338,6 +359,18 @@ export const T = {
       guestEarn: "פתחו חשבון{withEmail} וקבלו {n} במטבעות בונוס על ההזמנה הזו.", withEmail: " עם {email}", createAccount: "פתיחת חשבון",
       msg: { hi: "היי! הזמנה חדשה מ-", no: "מספר הזמנה", sub: "סכום ביניים", del: "משלוח", bonus: "מטבעות בונוס", total: "סה״כ", name: "שם", phone: "טלפון", email: "אימייל", addr: "כתובת", notes: "הערות", size: "×" }
     },
+    cancel: {
+      title: "ביטול עסקה", desc: "ביטול עסקה ב-La Elegant: טופס קצר ששולח אלינו הודעת ביטול לפי חוק הגנת הצרכן.",
+      eyebrow: "חוק הגנת הצרכן", h1: "ביטול עסקה",
+      intro: "ניתן לבטל עסקה בתוך {days} ימים מיום קבלת הסט או מיום קבלת פרטי העסקה, לפי המאוחר. ממלאים את הטופס ושולחים – זו הודעת הביטול בכתב.",
+      policy: "מדיניות הביטולים וההחזרות המלאה",
+      optional: "לא חובה", labels: { name: "שם מלא", phone: "טלפון", order: "מספר הזמנה", email: "אימייל", reason: "סיבת הביטול" },
+      sendWa: "שליחה בוואטסאפ", sendMail: "שליחה באימייל", copy: "העתקת ההודעה",
+      subject: "הודעת ביטול עסקה", msgHead: "הודעת ביטול עסקה – La Elegant. ברצוני לבטל את העסקה.",
+      after: "ההודעה תיפתח בוואטסאפ או באפליקציית המייל – לוחצים שם על שליחה. אנחנו מאשרים כל ביטול בכתב ומחזירים את הכסף בתוך 14 ימים.",
+      afterCopy: "העתיקו את ההודעה ושלחו אותה אלינו באחת מדרכי הקשר שבאתר.",
+      copied: "הועתק. שלחו אלינו ונאשר בכתב.", missing: "נא למלא שם וטלפון."
+    },
     legal: {
       updated: "עודכן לאחרונה",
       shipping: { title: "משלוחים והחזרות", desc: "משלוחים, ביטולים והחזרות: סטים שנתפרים לפי הזמנה, זמני אספקה וביטול עסקה לפי חוק הגנת הצרכן." },
@@ -372,7 +405,10 @@ ${c.shipList}
 <ul>
 <li>Send a written cancellation notice within 14 days of receiving the product or the document with the transaction details, whichever is later.</li>
 <li>Cancellation fee: 5% of the transaction price or ₪100, whichever is lower.</li>
-<li>Refunds are made to the original payment method.</li>
+<li>Refunds are made to the original payment method within 14 days of receiving your cancellation notice.</li>
+<li>If you cancel because of a defect, because the item does not match what was shown on the site, or because it was not delivered on time, there is no cancellation fee and we collect the item from you at our expense.</li>
+<li>A person with a disability, a senior citizen (65+) or a new immigrant (up to five years in Israel) may cancel within four months, as provided by the law, where the purchase included a conversation with us (including by chat or message).</li>
+<li>The quickest way to cancel is the <a href="${c.L}/cancel">cancellation form</a>; any written notice to our contact details is also valid.</li>
 ${c.accounts ? `<li>Bonus coins used on the order are returned to your account; coins earned on it are removed.</li>` : ""}
 </ul>
 <h2>Returning an item</h2>
@@ -489,7 +525,10 @@ ${c.shipList}
 <ul>
 <li>יש למסור הודעת ביטול בכתב תוך 14 ימים מיום קבלת המוצר או מיום קבלת המסמך עם פרטי העסקה, לפי המאוחר.</li>
 <li>דמי ביטול: 5% ממחיר העסקה או 100 ₪, לפי הנמוך מביניהם.</li>
-<li>ההחזר יבוצע לאמצעי התשלום המקורי.</li>
+<li>ההחזר יבוצע לאמצעי התשלום המקורי בתוך 14 ימים מיום קבלת הודעת הביטול.</li>
+<li>אם הביטול נעשה עקב פגם, אי-התאמה בין המוצר לבין מה שהוצג באתר, או אי-אספקה במועד – לא ייגבו דמי ביטול ואנחנו נאסוף את המוצר על חשבוננו.</li>
+<li>אדם עם מוגבלות, אזרח ותיק (65+) או עולה חדש (עד חמש שנים בארץ) רשאים לבטל עסקה בתוך ארבעה חודשים, בהתאם לחוק, אם העסקה כללה שיחה איתנו (לרבות בצ׳אט או בהודעות).</li>
+<li>הדרך המהירה לבטל היא <a href="${c.L}/cancel">טופס ביטול העסקה</a>; גם כל הודעה בכתב לפרטי הקשר שלנו תקפה.</li>
 ${c.accounts ? `<li>מטבעות בונוס שמומשו בהזמנה יוחזרו לחשבון; מטבעות שנצברו בגינה יבוטלו.</li>` : ""}
 </ul>
 <h2>החזרת פריט</h2>
