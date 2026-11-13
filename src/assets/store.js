@@ -229,9 +229,9 @@
           <span class="line-sub">${esc(p.color)}</span>
           <span class="line-sub">${esc(sizeText(p, l.sizes))}</span>
           <div class="qty">
-            <button type="button" data-q="${i}" data-d="1" aria-label="${esc(t.addOne)}">+</button>
-            <output aria-label="${esc(t.qty)}">${l.qty}</output>
             <button type="button" data-q="${i}" data-d="-1" aria-label="${esc(t.removeOne)}">−</button>
+            <output aria-label="${esc(t.qty)}">${l.qty}</output>
+            <button type="button" data-q="${i}" data-d="1" aria-label="${esc(t.addOne)}">+</button>
             <button type="button" class="rm" data-rm="${i}">${esc(t.remove)}</button>
           </div>
         </div>
